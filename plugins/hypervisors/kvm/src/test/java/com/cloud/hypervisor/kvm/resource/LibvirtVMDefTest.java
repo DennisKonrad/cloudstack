@@ -63,6 +63,7 @@ public class LibvirtVMDefTest extends TestCase {
                     + "<target dev='targetDeviceName'/>\n"
                     + "<mac address='00:11:22:aa:bb:dd'/>\n"
                     + "<model type='virtio'/>\n"
+                    + "<script path='/bin/if_up'/>\n"
                     + "<link state='up'/>\n"
                     + "</interface>\n";
 
