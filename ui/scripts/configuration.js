@@ -1010,6 +1010,10 @@
                         },
                         displaytext: {
                             label: 'label.description'
+                        },
+                        defaultuse: {
+                            label: 'label.default',
+                            converter: cloudStack.converters.toBooleanText,
                         }
                     },
 
@@ -1069,6 +1073,14 @@
                                                 id: 'secondarystoragevm',
                                                 description: _l('label.secondary.storage.vm')
                                             });
+                                            items.push({
+                                              id: 'internalloadbalancervm',
+                                              description: _l('label.internallbvm')
+                                            });
+                                            items.push({
+                                              id: 'elasticloadbalancervm',
+                                              description: _l('label.elastic.LB')
+                                            });
                                             args.response.success({
                                                 data: items
                                             });
@@ -1113,6 +1125,12 @@
                                                 data: items
                                             });
                                         }
+                                    },
+                                    defaultUse: {
+                                      label: 'label.disk.default',
+                                      docID: 'helpServiceOfferingDefaultUse',
+                                      isBoolean: true,
+                                      isChecked: false
                                     },
                                     cpuNumber: {
                                         label: 'label.num.cpu.cores',
@@ -1327,7 +1345,8 @@
                                     provisioningType: args.data.provisioningType,
                                     cpuNumber: args.data.cpuNumber,
                                     cpuSpeed: args.data.cpuSpeed,
-                                    memory: args.data.memory
+                                    memory: args.data.memory,
+                                    defaultUse:  args.data.defaultUse == "on"
                                 };
 
                                 if (args.data.networkRate != null && args.data.networkRate.length > 0) {
@@ -1417,6 +1436,7 @@
 
                             notification: {
                                 poll: function(args) {
+                                    $('.section-switcher select').val('systemServiceOfferings').trigger('change');
                                     args.complete();
                                 }
                             }
@@ -1455,8 +1475,10 @@
                                     var data = {
                                         id: args.context.systemServiceOfferings[0].id,
                                         name: args.data.name,
-                                        displaytext: args.data.displaytext
+                                        displaytext: args.data.displaytext,
+                                        defaultuse: args.data.defaultuse == "on"
                                     };
+
                                     $.ajax({
                                         url: createURL('updateServiceOffering'),
                                         data: data,
@@ -1465,6 +1487,7 @@
                                             args.response.success({
                                                 data: item
                                             });
+                                            $('.section-switcher select').val('systemServiceOfferings').trigger('change');
                                         },
                                         error: function(data) {
                                             args.response.error(parseXMLHttpResponse(data));
@@ -1543,6 +1566,12 @@
                                                 case 'secondarystoragevm':
                                                     text = _l('label.secondary.storage.vm');
                                                     break;
+                                                case 'internalloadbalancervm':
+                                                  text = _l('label.internallbvm');
+                                                  break;
+                                                case 'elasticloadbalancervm':
+                                                  text = _l('label.elastic.LB');
+                                                  break;
                                             }
                                             return text;
                                         }
@@ -1552,6 +1581,17 @@
                                     },
                                     provisioningtype: {
                                         label: 'label.disk.provisioningtype'
+                                    },
+                                    defaultuse: {
+                                        label: 'label.disk.default',
+                                        isEditable: true,
+                                        isBoolean: true,
+                                        isChecked: function(args) {
+                                          args.response.success({
+                                            data: args
+                                          })
+                                        },
+                                        converter: cloudStack.converters.toBooleanText
                                     },
                                     cpunumber: {
                                         label: 'label.num.cpu.cores'
