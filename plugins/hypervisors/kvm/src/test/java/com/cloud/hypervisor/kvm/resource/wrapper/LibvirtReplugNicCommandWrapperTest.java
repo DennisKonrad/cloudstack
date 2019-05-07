@@ -250,6 +250,7 @@ public class LibvirtReplugNicCommandWrapperTest {
                 "<interface type='bridge'>\n"
                         + "<source bridge='alubr0'/>\n"
                         + "<target dev='vnet10'/>\n"
+                        + "<mtu size='1500'/>\n"
                         + "<mac address='02:00:7c:98:00:02'/>\n"
                         + "<model type='virtio'/>\n"
                         + "<virtualport type='openvswitch'>\n"
@@ -261,6 +262,7 @@ public class LibvirtReplugNicCommandWrapperTest {
                 "<interface type='bridge'>\n"
                         + "<source bridge='alubr0'/>\n"
                         + "<target dev='vnet10'/>\n"
+                        + "<mtu size='1500'/>\n"
                         + "<mac address='02:00:7c:98:00:02'/>\n"
                         + "<model type='virtio'/>\n"
                         + "<virtualport type='openvswitch'>\n"
@@ -275,6 +277,7 @@ public class LibvirtReplugNicCommandWrapperTest {
         nic.setName("alubr0");
         nic.setBroadcastType(Networks.BroadcastDomainType.Vsp);
         nic.setMac("02:00:7c:98:00:02");
+        nic.setMtu(1500);
         final ReplugNicCommand command = new ReplugNicCommand(nic, "i-85-285-VM", VirtualMachine.Type.User);
         final Answer result = wrapper.execute(command, res);
 
