@@ -32,7 +32,7 @@
         [ "-m", "512M" ],
         [ "-smp", "cpus=1,maxcpus=1,cores=1" ]
       ],
-      "disk_size": 2000,
+      "disk_size": 3000,
       "format": "qcow2",
 
       "disk_interface": "virtio",
