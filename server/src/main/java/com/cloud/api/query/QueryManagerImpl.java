@@ -1298,7 +1298,7 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
         Long accountId = null;
         String path = null;
 
-        Filter searchFilter = new Filter(ProjectJoinVO.class, "id", false, startIndex, pageSize);
+        Filter searchFilter = new Filter(ProjectJoinVO.class, null, false, startIndex, pageSize);
         SearchBuilder<ProjectJoinVO> sb = _projectJoinDao.createSearchBuilder();
         sb.select(null, Func.DISTINCT, sb.entity().getId()); // select distinct
         // ids
