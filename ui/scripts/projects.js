@@ -641,6 +641,7 @@
 
                 $.ajax({
                     url: createURL('listProjects', {
+                        details: 'min',
                         ignoreProject: true
                     }),
                     data: data2,
@@ -779,6 +780,7 @@
 
                         $.ajax({
                             url: createURL('listProjects', {
+                                details: 'min',
                                 ignoreProject: true
                             }),
                             data: data,

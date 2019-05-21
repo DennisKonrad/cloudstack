@@ -2261,6 +2261,7 @@
                                         };
                                         $.ajax({
                                             url: createURL('listAccounts', {
+                                                details: 'min',
                                                 ignoreProject: true
                                             }),
                                             data: dataObj,
@@ -2298,6 +2299,7 @@
                                         };
                                         $.ajax({
                                             url: createURL('listProjects', {
+                                                details: 'min',
                                                 ignoreProject: true
                                             }),
                                             data: dataObj,

@@ -187,6 +187,7 @@ import org.apache.cloudstack.acl.ControlledEntity;
 import org.apache.cloudstack.acl.ControlledEntity.ACLType;
 import org.apache.cloudstack.affinity.AffinityGroup;
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
+import org.apache.cloudstack.api.ApiConstants.DomainDetails;
 import org.apache.cloudstack.api.ApiConstants.HostDetails;
 import org.apache.cloudstack.api.ApiConstants.VMDetails;
 import org.apache.cloudstack.api.ResponseGenerator;
@@ -374,13 +375,13 @@ public class ApiResponseHelper implements ResponseGenerator {
     // creates an account + user)
     @Override
     public AccountResponse createUserAccountResponse(ResponseView view, UserAccount user) {
-        return ApiDBUtils.newAccountResponse(view, ApiDBUtils.findAccountViewById(user.getAccountId()));
+        return ApiDBUtils.newAccountResponse(view, EnumSet.of(DomainDetails.all), ApiDBUtils.findAccountViewById(user.getAccountId()));
     }
 
     @Override
     public AccountResponse createAccountResponse(ResponseView view, Account account) {
         AccountJoinVO vUser = ApiDBUtils.newAccountView(account);
-        return ApiDBUtils.newAccountResponse(view, vUser);
+        return ApiDBUtils.newAccountResponse(view, EnumSet.of(DomainDetails.all), vUser);
     }
 
     @Override
@@ -618,6 +619,14 @@ public class ApiResponseHelper implements ResponseGenerator {
             vmSnapshotResponse.setDomainId(domain.getUuid());
             vmSnapshotResponse.setDomainName(domain.getName());
         }
+
+        List<? extends ResourceTag> tags = _resourceTagDao.listBy(vmSnapshot.getId(), ResourceObjectType.VMSnapshot);
+        List<ResourceTagResponse> tagResponses = new ArrayList<ResourceTagResponse>();
+        for (ResourceTag tag : tags) {
+            ResourceTagResponse tagResponse = createResourceTagResponse(tag, false);
+            CollectionUtils.addIgnoreNull(tagResponses, tagResponse);
+        }
+        vmSnapshotResponse.setTags(new HashSet<>(tagResponses));
 
         vmSnapshotResponse.setCurrent(vmSnapshot.getCurrent());
         vmSnapshotResponse.setType(vmSnapshot.getType().toString());
@@ -2261,7 +2270,7 @@ public class ApiResponseHelper implements ResponseGenerator {
     @Override
     public ProjectResponse createProjectResponse(Project project) {
         List<ProjectJoinVO> viewPrjs = ApiDBUtils.newProjectView(project);
-        List<ProjectResponse> listPrjs = ViewResponseHelper.createProjectResponse(viewPrjs.toArray(new ProjectJoinVO[viewPrjs.size()]));
+        List<ProjectResponse> listPrjs = ViewResponseHelper.createProjectResponse(EnumSet.of(DomainDetails.all), viewPrjs.toArray(new ProjectJoinVO[viewPrjs.size()]));
         assert listPrjs != null && listPrjs.size() == 1 : "There should be one project  returned";
         return listPrjs.get(0);
     }
@@ -2562,7 +2571,7 @@ public class ApiResponseHelper implements ResponseGenerator {
         for (Network.Provider serviceProvider : serviceProviders) {
             // return only Virtual Router/JuniperSRX/CiscoVnmc as a provider for the firewall
             if (service == Service.Firewall
-                    && !(serviceProvider == Provider.VirtualRouter || serviceProvider == Provider.JuniperSRX || serviceProvider == Provider.CiscoVnmc || serviceProvider == Provider.PaloAlto || serviceProvider == Provider.NuageVsp || serviceProvider == Provider.BigSwitchBcf)) {
+                    && !(serviceProvider == Provider.VirtualRouter || serviceProvider == Provider.JuniperSRX || serviceProvider == Provider.CiscoVnmc || serviceProvider == Provider.PaloAlto || serviceProvider == Provider.BigSwitchBcf)) {
                 continue;
             }
 
