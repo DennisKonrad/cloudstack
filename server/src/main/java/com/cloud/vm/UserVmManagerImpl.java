@@ -16,92 +16,8 @@
 // under the License.
 package com.cloud.vm;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import static java.util.Objects.nonNull;
 
-import javax.inject.Inject;
-import javax.naming.ConfigurationException;
-
-import com.cloud.storage.TemplateOVFPropertyVO;
-import com.cloud.storage.dao.TemplateOVFPropertiesDao;
-import org.apache.cloudstack.acl.ControlledEntity.ACLType;
-import org.apache.cloudstack.acl.SecurityChecker.AccessType;
-import org.apache.cloudstack.affinity.AffinityGroupService;
-import org.apache.cloudstack.affinity.AffinityGroupVO;
-import org.apache.cloudstack.affinity.dao.AffinityGroupDao;
-import org.apache.cloudstack.affinity.dao.AffinityGroupVMMapDao;
-import org.apache.cloudstack.api.ApiConstants;
-import org.apache.cloudstack.api.BaseCmd.HTTPMethod;
-import org.apache.cloudstack.api.command.admin.vm.AssignVMCmd;
-import org.apache.cloudstack.api.command.admin.vm.DeployVMCmdByAdmin;
-import org.apache.cloudstack.api.command.admin.vm.RecoverVMCmd;
-import org.apache.cloudstack.api.command.user.vm.AddNicToVMCmd;
-import org.apache.cloudstack.api.command.user.vm.DeployVMCmd;
-import org.apache.cloudstack.api.command.user.vm.DestroyVMCmd;
-import org.apache.cloudstack.api.command.user.vm.RebootVMCmd;
-import org.apache.cloudstack.api.command.user.vm.RemoveNicFromVMCmd;
-import org.apache.cloudstack.api.command.user.vm.ResetVMPasswordCmd;
-import org.apache.cloudstack.api.command.user.vm.ResetVMSSHKeyCmd;
-import org.apache.cloudstack.api.command.user.vm.RestoreVMCmd;
-import org.apache.cloudstack.api.command.user.vm.ScaleVMCmd;
-import org.apache.cloudstack.api.command.user.vm.SecurityGroupAction;
-import org.apache.cloudstack.api.command.user.vm.StartVMCmd;
-import org.apache.cloudstack.api.command.user.vm.UpdateDefaultNicForVMCmd;
-import org.apache.cloudstack.api.command.user.vm.UpdateVMCmd;
-import org.apache.cloudstack.api.command.user.vm.UpdateVmNicIpCmd;
-import org.apache.cloudstack.api.command.user.vm.UpgradeVMCmd;
-import org.apache.cloudstack.api.command.user.vmgroup.CreateVMGroupCmd;
-import org.apache.cloudstack.api.command.user.vmgroup.DeleteVMGroupCmd;
-import org.apache.cloudstack.api.command.user.volume.ResizeVolumeCmd;
-import org.apache.cloudstack.context.CallContext;
-import org.apache.cloudstack.engine.cloud.entity.api.VirtualMachineEntity;
-import org.apache.cloudstack.engine.cloud.entity.api.db.dao.VMNetworkMapDao;
-import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
-import org.apache.cloudstack.engine.orchestration.service.VolumeOrchestrationService;
-import org.apache.cloudstack.engine.service.api.OrchestrationService;
-import org.apache.cloudstack.engine.subsystem.api.storage.DataStore;
-import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreManager;
-import org.apache.cloudstack.engine.subsystem.api.storage.PrimaryDataStore;
-import org.apache.cloudstack.engine.subsystem.api.storage.VolumeDataFactory;
-import org.apache.cloudstack.engine.subsystem.api.storage.VolumeInfo;
-import org.apache.cloudstack.engine.subsystem.api.storage.VolumeService;
-import org.apache.cloudstack.engine.subsystem.api.storage.VolumeService.VolumeApiResult;
-import org.apache.cloudstack.framework.async.AsyncCallFuture;
-import org.apache.cloudstack.framework.config.ConfigKey;
-import org.apache.cloudstack.framework.config.Configurable;
-import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
-import org.apache.cloudstack.managed.context.ManagedContextRunnable;
-import org.apache.cloudstack.query.QueryService;
-import org.apache.cloudstack.storage.command.DeleteCommand;
-import org.apache.cloudstack.storage.command.DettachCommand;
-import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
-import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
-import org.apache.cloudstack.storage.datastore.db.TemplateDataStoreDao;
-import org.apache.cloudstack.storage.datastore.db.TemplateDataStoreVO;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
-
-import com.cloud.hypervisor.kvm.dpdk.DpdkHelper;
 import com.cloud.agent.AgentManager;
 import com.cloud.agent.api.Answer;
 import com.cloud.agent.api.Command;
@@ -186,6 +102,7 @@ import com.cloud.host.dao.HostDao;
 import com.cloud.hypervisor.Hypervisor.HypervisorType;
 import com.cloud.hypervisor.HypervisorCapabilitiesVO;
 import com.cloud.hypervisor.dao.HypervisorCapabilitiesDao;
+import com.cloud.hypervisor.kvm.dpdk.DpdkHelper;
 import com.cloud.network.IpAddressManager;
 import com.cloud.network.Network;
 import com.cloud.network.Network.IpAddresses;
@@ -243,6 +160,7 @@ import com.cloud.storage.Storage.StoragePoolType;
 import com.cloud.storage.Storage.TemplateType;
 import com.cloud.storage.StoragePool;
 import com.cloud.storage.StoragePoolStatus;
+import com.cloud.storage.TemplateOVFPropertyVO;
 import com.cloud.storage.VMTemplateStorageResourceAssoc;
 import com.cloud.storage.VMTemplateVO;
 import com.cloud.storage.VMTemplateZoneVO;
@@ -253,6 +171,7 @@ import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.GuestOSCategoryDao;
 import com.cloud.storage.dao.GuestOSDao;
 import com.cloud.storage.dao.SnapshotDao;
+import com.cloud.storage.dao.TemplateOVFPropertiesDao;
 import com.cloud.storage.dao.VMTemplateDao;
 import com.cloud.storage.dao.VMTemplateZoneDao;
 import com.cloud.storage.dao.VolumeDao;
@@ -313,6 +232,89 @@ import com.cloud.vm.snapshot.VMSnapshotManager;
 import com.cloud.vm.snapshot.VMSnapshotVO;
 import com.cloud.vm.snapshot.dao.VMSnapshotDao;
 import com.google.common.base.Strings;
+import org.apache.cloudstack.acl.ControlledEntity.ACLType;
+import org.apache.cloudstack.acl.SecurityChecker.AccessType;
+import org.apache.cloudstack.affinity.AffinityGroupService;
+import org.apache.cloudstack.affinity.AffinityGroupVO;
+import org.apache.cloudstack.affinity.dao.AffinityGroupDao;
+import org.apache.cloudstack.affinity.dao.AffinityGroupVMMapDao;
+import org.apache.cloudstack.api.ApiConstants;
+import org.apache.cloudstack.api.BaseCmd.HTTPMethod;
+import org.apache.cloudstack.api.command.admin.vm.AssignVMCmd;
+import org.apache.cloudstack.api.command.admin.vm.DeployVMCmdByAdmin;
+import org.apache.cloudstack.api.command.admin.vm.RecoverVMCmd;
+import org.apache.cloudstack.api.command.user.vm.AddNicToVMCmd;
+import org.apache.cloudstack.api.command.user.vm.DeployVMCmd;
+import org.apache.cloudstack.api.command.user.vm.DestroyVMCmd;
+import org.apache.cloudstack.api.command.user.vm.RebootVMCmd;
+import org.apache.cloudstack.api.command.user.vm.RemoveNicFromVMCmd;
+import org.apache.cloudstack.api.command.user.vm.ResetVMPasswordCmd;
+import org.apache.cloudstack.api.command.user.vm.ResetVMSSHKeyCmd;
+import org.apache.cloudstack.api.command.user.vm.RestoreVMCmd;
+import org.apache.cloudstack.api.command.user.vm.ScaleVMCmd;
+import org.apache.cloudstack.api.command.user.vm.SecurityGroupAction;
+import org.apache.cloudstack.api.command.user.vm.StartVMCmd;
+import org.apache.cloudstack.api.command.user.vm.UpdateDefaultNicForVMCmd;
+import org.apache.cloudstack.api.command.user.vm.UpdateVMCmd;
+import org.apache.cloudstack.api.command.user.vm.UpdateVmNicIpCmd;
+import org.apache.cloudstack.api.command.user.vm.UpgradeVMCmd;
+import org.apache.cloudstack.api.command.user.vmgroup.CreateVMGroupCmd;
+import org.apache.cloudstack.api.command.user.vmgroup.DeleteVMGroupCmd;
+import org.apache.cloudstack.api.command.user.volume.ResizeVolumeCmd;
+import org.apache.cloudstack.context.CallContext;
+import org.apache.cloudstack.engine.cloud.entity.api.VirtualMachineEntity;
+import org.apache.cloudstack.engine.cloud.entity.api.db.dao.VMNetworkMapDao;
+import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
+import org.apache.cloudstack.engine.orchestration.service.VolumeOrchestrationService;
+import org.apache.cloudstack.engine.service.api.OrchestrationService;
+import org.apache.cloudstack.engine.subsystem.api.storage.DataStore;
+import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreManager;
+import org.apache.cloudstack.engine.subsystem.api.storage.PrimaryDataStore;
+import org.apache.cloudstack.engine.subsystem.api.storage.VolumeDataFactory;
+import org.apache.cloudstack.engine.subsystem.api.storage.VolumeInfo;
+import org.apache.cloudstack.engine.subsystem.api.storage.VolumeService;
+import org.apache.cloudstack.engine.subsystem.api.storage.VolumeService.VolumeApiResult;
+import org.apache.cloudstack.framework.async.AsyncCallFuture;
+import org.apache.cloudstack.framework.config.ConfigKey;
+import org.apache.cloudstack.framework.config.Configurable;
+import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
+import org.apache.cloudstack.managed.context.ManagedContextRunnable;
+import org.apache.cloudstack.query.QueryService;
+import org.apache.cloudstack.storage.command.DeleteCommand;
+import org.apache.cloudstack.storage.command.DettachCommand;
+import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
+import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
+import org.apache.cloudstack.storage.datastore.db.TemplateDataStoreDao;
+import org.apache.cloudstack.storage.datastore.db.TemplateDataStoreVO;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.naming.ConfigurationException;
+
 
 public class UserVmManagerImpl extends ManagerBase implements UserVmManager, VirtualMachineGuru, UserVmService, Configurable {
     private static final Logger s_logger = Logger.getLogger(UserVmManagerImpl.class);
@@ -505,6 +507,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
     private static final int MAX_HTTP_GET_LENGTH = 2 * MAX_USER_DATA_LENGTH_BYTES;
     private static final int MAX_HTTP_POST_LENGTH = 16 * MAX_USER_DATA_LENGTH_BYTES;
+    private static final String KVM_OVS_MTU_KEY = "kvm.ovs.mtu.size";
+
+    private Integer _kvmOvsMtuSize = 0;
 
     @Inject
     private OrchestrationService _orchSrvc;
@@ -1199,7 +1204,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             throw new CloudRuntimeException("A NIC with this MAC address exists for network: " + network.getUuid());
         }
 
-        NicProfile profile = new NicProfile(ipAddress, null, macAddress);
+        NicProfile profile = new NicProfile(ipAddress, null, macAddress, _kvmOvsMtuSize);
         if (ipAddress != null) {
             if (!(NetUtils.isValidIp4(ipAddress) || NetUtils.isValidIp6(ipAddress))) {
                 throw new InvalidParameterValueException("Invalid format for IP address parameter: " + ipAddress);
@@ -1499,6 +1504,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     public UserVm updateNicIpForVirtualMachine(UpdateVmNicIpCmd cmd) {
         Long nicId = cmd.getNicId();
         String ipaddr = cmd.getIpaddress();
+
+        final Integer mtu = _kvmOvsMtuSize;
+
         Account caller = CallContext.current().getCallingAccount();
 
         //check whether the nic belongs to user vm.
@@ -1547,7 +1555,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         if (dc == null) {
             throw new InvalidParameterValueException("There is no dc with the nic");
         }
-        if (dc.getNetworkType() == NetworkType.Advanced && network.getGuestType() == Network.GuestType.Isolated) {
+        if (ipaddr != null && dc.getNetworkType() == NetworkType.Advanced && network.getGuestType() == Network.GuestType.Isolated) {
             try {
                 ipaddr = _ipAddrMgr.allocateGuestIP(network, ipaddr);
             } catch (InsufficientAddressCapacityException e) {
@@ -1589,7 +1597,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     throw e;
                 }
             }
-        } else if (dc.getNetworkType() == NetworkType.Basic || network.getGuestType()  == Network.GuestType.Shared) {
+        } else if (ipaddr != null && dc.getNetworkType() == NetworkType.Basic || network.getGuestType()  == Network.GuestType.Shared) {
             //handle the basic networks here
             //for basic zone, need to provide the podId to ensure proper ip alloation
             Long podId = null;
@@ -1625,13 +1633,13 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 s_logger.error("Allocating ip to guest nic " + nicVO.getUuid() + " failed, for insufficient address capacity");
                 return null;
             }
-        } else {
-            s_logger.error("UpdateVmNicIpCmd is not supported in this network...");
-            return null;
         }
 
-        s_logger.debug("Updating IPv4 address of NIC " + nicVO + " to " + ipaddr + "/" + nicVO.getIPv4Netmask() + " with gateway " + nicVO.getIPv4Gateway());
-        nicVO.setIPv4Address(ipaddr);
+        s_logger.debug("Updating IPv4 address of NIC " + nicVO + " to " + ipaddr + "/" + nicVO.getIPv4Netmask() + " with gateway " + nicVO.getIPv4Gateway() + " and MTU size " + mtu);
+        if (ipaddr != null) {
+            nicVO.setIPv4Address(ipaddr);
+        }
+        nicVO.setMtu(mtu);
         _nicDao.persist(nicVO);
 
         return vm;
@@ -2077,6 +2085,12 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         }
 
         Map<String, String> configs = _configDao.getConfiguration("AgentManager", params);
+
+        final String mtu_size =_configDao.getValue(KVM_OVS_MTU_KEY);
+
+        if (nonNull(mtu_size)) {
+            _kvmOvsMtuSize = Integer.valueOf(mtu_size);
+        }
 
         _instance = configs.get("instance.name");
         if (_instance == null) {
