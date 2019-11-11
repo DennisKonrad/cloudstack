@@ -53,6 +53,7 @@ import org.apache.cloudstack.api.response.ZoneResponse;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.commons.collections.MapUtils;
 
+import com.cloud.agent.api.LogLevel;
 import com.cloud.event.EventTypes;
 import com.cloud.exception.ConcurrentOperationException;
 import com.cloud.exception.InsufficientCapacityException;
@@ -209,6 +210,11 @@ public class DeployVMCmd extends BaseAsyncCreateCustomIdCmd implements SecurityG
     @Parameter(name = ApiConstants.COPY_IMAGE_TAGS, type = CommandType.BOOLEAN, since = "4.13", description = "if true the image tags (if any) will be copied to the VM, default value is false")
     private Boolean copyImageTags;
 
+    @Parameter(name = ApiConstants.OVF_PROPERTIES, type = CommandType.MAP, since = "4.13",
+            description = "used to specify the OVF properties.")
+    @LogLevel(LogLevel.Log4jLevel.Off)
+    private Map vmOvfProperties;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -255,6 +261,19 @@ public class DeployVMCmd extends BaseAsyncCreateCustomIdCmd implements SecurityG
             customparameterMap.put("rootdisksize", rootdisksize.toString());
         }
         return customparameterMap;
+    }
+
+    public Map<String, String> getVmOVFProperties() {
+        Map<String, String> map = new HashMap<>();
+        if (MapUtils.isNotEmpty(vmOvfProperties)) {
+            Collection parameterCollection = vmOvfProperties.values();
+            Iterator iterator = parameterCollection.iterator();
+            while (iterator.hasNext()) {
+                HashMap<String, String> entry = (HashMap<String, String>)iterator.next();
+                map.put(entry.get("key"), entry.get("value"));
+            }
+        }
+        return map;
     }
 
     public String getGroup() {
