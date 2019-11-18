@@ -170,7 +170,7 @@ public class LibvirtVMDef {
                     if (_bootmode == BootMode.LEGACY) {
                         guestDef.append("<loader readonly='yes' secure='no' type='pflash'>" + _loader + "</loader>\n");
                     } else if (_bootmode == BootMode.SECURE) {
-                        guestDef.append("<loader readonly='yes' secure='yes 'type='pflash'>" + _loader + "</loader>\n");
+                        guestDef.append("<loader readonly='yes' secure='yes' type='pflash'>" + _loader + "</loader>\n");
                     }
                 }
                 if (_nvram != null) {
@@ -333,7 +333,7 @@ public class LibvirtVMDef {
             feaBuilder.append("<features>\n");
             for (String feature : _features) {
                 if (feature.equalsIgnoreCase("smm")) {
-                    feaBuilder.append("<" + feature + " state=\\'on\\' " + "/>\n");
+                    feaBuilder.append("<" + feature + " state=\'on\' " + "/>\n");
                 } else {
                     feaBuilder.append("<" + feature + "/>\n");
                 }
@@ -568,7 +568,7 @@ public class LibvirtVMDef {
         }
 
         public enum DiskBus {
-            IDE("ide"), SCSI("scsi"), VIRTIO("virtio"), XEN("xen"), USB("usb"), UML("uml"), FDC("fdc");
+            IDE("ide"), SCSI("scsi"), VIRTIO("virtio"), XEN("xen"), USB("usb"), UML("uml"), FDC("fdc"), SATA("sata");
             String _bus;
 
             DiskBus(String bus) {
@@ -693,13 +693,17 @@ public class LibvirtVMDef {
                 return "sd" + getDevLabelSuffix(devId);
             } else if (bus == DiskBus.VIRTIO) {
                 return "vd" + getDevLabelSuffix(devId);
+            } else if (bus == DiskBus.SATA){
+                if(!forIso) {
+                    return "sda";
+                }
             }
             if (forIso) {
                 devId --;
             } else if(devId >= 2) {
                 devId += 2;
             }
-            return "hd" + getDevLabelSuffix(devId);
+            return (DiskBus.SATA == bus ) ?"sdb":"hd" + getDevLabelSuffix(devId);
 
         }
 
@@ -731,6 +735,23 @@ public class LibvirtVMDef {
 
         }
 
+        public void defFileBasedDisk(String filePath, int devId, DiskFmtType diskFmtType,boolean isWindowsOS) {
+
+            _diskType = DiskType.FILE;
+            _deviceType = DeviceType.DISK;
+            _diskCacheMode = DiskCacheMode.NONE;
+            _sourcePath = filePath;
+            _diskFmtType = diskFmtType;
+
+            if (isWindowsOS) {
+                _diskLabel = getDevLabel(devId, DiskBus.SATA, false); // Windows Secure VM
+                _bus = DiskBus.SATA;
+            } else {
+                _diskLabel = getDevLabel(devId, DiskBus.VIRTIO, false); // Linux Secure VM
+                _bus = DiskBus.VIRTIO;
+            }
+        }
+
         public void defISODisk(String volPath) {
             _diskType = DiskType.FILE;
             _deviceType = DeviceType.CDROM;
@@ -752,6 +773,26 @@ public class LibvirtVMDef {
                 _diskFmtType = DiskFmtType.RAW;
                 _diskCacheMode = DiskCacheMode.NONE;
                 _bus = DiskBus.IDE;
+            }
+        }
+
+        public void defISODisk(String volPath, Integer devId,boolean isSecure, boolean isWindowOs) {
+            if (!isSecure) {
+                defISODisk(volPath, devId);
+            } else {
+                _diskType = DiskType.FILE;
+                _deviceType = DeviceType.CDROM;
+                _sourcePath = volPath;
+                if (isWindowOs) {
+                    _diskLabel = getDevLabel(devId, DiskBus.SATA, true);
+                    _bus = DiskBus.SATA;
+                } else {
+                    _diskLabel = getDevLabel(devId, DiskBus.SCSI, true);
+                    _bus = DiskBus.SCSI;
+                }
+                _diskFmtType = DiskFmtType.RAW;
+                _diskCacheMode = DiskCacheMode.NONE;
+
             }
         }
 

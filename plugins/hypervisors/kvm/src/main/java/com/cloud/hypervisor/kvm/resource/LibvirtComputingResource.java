@@ -1120,6 +1120,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             PropertiesUtil.loadFromFile(_uefiProperties, file);
             s_logger.info("guest.nvram.template.legacy = " + _uefiProperties.getProperty("guest.nvram.template.legacy"));
             s_logger.info("guest.loader.legacy = " + _uefiProperties.getProperty("guest.loader.legacy"));
+            s_logger.info("guest.nvram.template.secure = " + _uefiProperties.getProperty("guest.nvram.template.secure"));
+            s_logger.info("guest.loader.secure =" + _uefiProperties.getProperty("guest.loader.secure"));
+            s_logger.info("guest.nvram.path = " + _uefiProperties.getProperty("guest.nvram.path"));
 
         } catch (final FileNotFoundException ex) {
             throw new CloudRuntimeException("Cannot find the file: " + file.getAbsolutePath(), ex);
@@ -2110,10 +2113,15 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
         Map<String, String> customParams = vmTO.getDetails();
         boolean isUefiEnabled = false;
+        boolean isSecureBoot = false;
         String bootMode =null;
         if (MapUtils.isNotEmpty(customParams) && customParams.containsKey("UEFI")) {
             isUefiEnabled = true;
             bootMode = customParams.get("UEFI");
+            if (StringUtils.isNotBlank(bootMode) && "secure".equalsIgnoreCase(bootMode)) {
+                isSecureBoot = true;
+            }
+
         }
 
         Map<String, String> extraConfig = vmTO.getExtraConfig();
@@ -2158,11 +2166,15 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
             if (_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_PATH) != null)
                 guest.setNvram(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_PATH));
-
-            if (_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_SECURE) != null && "secure".equalsIgnoreCase(bootMode))
-                guest.setNvramTemplate(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_SECURE));
-            if(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_LEGACY)!= null )
-                guest.setNvramTemplate(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_LEGACY));
+            if (isSecureBoot) {
+                if (_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_SECURE) != null && "secure".equalsIgnoreCase(bootMode)) {
+                    guest.setNvramTemplate(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_SECURE));
+                }
+            } else {
+                if (_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_LEGACY) != null) {
+                    guest.setNvramTemplate(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_LEGACY));
+                }
+            }
 
         }
 
@@ -2369,7 +2381,10 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     public void createVbd(final Connect conn, final VirtualMachineTO vmSpec, final String vmName, final LibvirtVMDef vm) throws InternalErrorException, LibvirtException, URISyntaxException {
+        final Map<String, String> details = vmSpec.getDetails();
         final List<DiskTO> disks = Arrays.asList(vmSpec.getDisks());
+        boolean isSecureBoot = false;
+        boolean isWindowsTemplate = false;
         Collections.sort(disks, new Comparator<DiskTO>() {
             @Override
             public int compare(final DiskTO arg0, final DiskTO arg1) {
@@ -2377,6 +2392,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         });
 
+        if (MapUtils.isNotEmpty(details) && details.containsKey("UEFI")) {
+            isSecureBoot = isSecureMode(details.get("UEFI"));
+        }
+        if (vmSpec.getOs().toLowerCase().contains("window")) {
+            isWindowsTemplate =true;
+        }
         for (final DiskTO volume : disks) {
             KVMPhysicalDisk physicalDisk = null;
             KVMStoragePool pool = null;
@@ -2435,8 +2456,13 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             int devId = volume.getDiskSeq().intValue();
             if (volume.getType() == Volume.Type.ISO) {
                 if (volPath == null) {
-                    /* Add iso as placeholder */
-                    disk.defISODisk(null, devId);
+                    if (isSecureBoot) {
+                        disk.defISODisk(null, devId,isSecureBoot,isWindowsTemplate);
+
+                    } else {
+                        /* Add iso as placeholder */
+                        disk.defISODisk(null, devId);
+                    }
                 } else {
                     disk.defISODisk(volPath, devId);
                 }
@@ -2474,7 +2500,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                     if (volume.getType() == Volume.Type.DATADISK) {
                         disk.defFileBasedDisk(physicalDisk.getPath(), devId, diskBusTypeData, DiskDef.DiskFmtType.QCOW2);
                     } else {
-                        disk.defFileBasedDisk(physicalDisk.getPath(), devId, diskBusType, DiskDef.DiskFmtType.QCOW2);
+                        if (isSecureBoot) {
+                            disk.defFileBasedDisk(physicalDisk.getPath(), devId, DiskDef.DiskFmtType.QCOW2, isWindowsTemplate);
+                        } else {
+                            disk.defFileBasedDisk(physicalDisk.getPath(), devId, diskBusType, DiskDef.DiskFmtType.QCOW2);
+                        }
                     }
 
                 }
