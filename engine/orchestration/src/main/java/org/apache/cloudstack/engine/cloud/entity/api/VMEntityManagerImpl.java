@@ -29,6 +29,7 @@ import org.apache.cloudstack.engine.cloud.entity.api.db.dao.VMEntityDao;
 import org.apache.cloudstack.engine.cloud.entity.api.db.dao.VMReservationDao;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreManager;
 import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
+import org.apache.commons.collections.MapUtils;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -148,11 +149,14 @@ public class VMEntityManagerImpl implements VMEntityManager {
         VMInstanceVO vm = _vmDao.findByUuid(vmEntityVO.getUuid());
         VirtualMachineProfileImpl vmProfile = new VirtualMachineProfileImpl(vm);
         vmProfile.setServiceOffering(_serviceOfferingDao.findByIdIncludingRemoved(vm.getId(), vm.getServiceOfferingId()));
-        if (vmEntityVO.getDetails() != null) {
+        if (MapUtils.isNotEmpty(vmEntityVO.getDetails()) &&
+                vmEntityVO.getDetails().containsKey(VirtualMachineProfile.Param.UefiFlag.getName()) &&
+                "yes".equalsIgnoreCase(vmEntityVO.getDetails().get(VirtualMachineProfile.Param.UefiFlag.getName())))
+        {
             Map<String, String> details = vmEntityVO.getDetails();
-            if (details.containsKey(VirtualMachineProfile.Param.BootType.getName())) {
-                vmProfile.getParameters().put(VirtualMachineProfile.Param.BootType, details.get(VirtualMachineProfile.Param.BootType.getName()));
-            }
+            vmProfile.getParameters().put(VirtualMachineProfile.Param.BootType, details.get(VirtualMachineProfile.Param.BootType));
+            vmProfile.getParameters().put(VirtualMachineProfile.Param.BootMode, details.get(VirtualMachineProfile.Param.BootMode));
+
         }
         DataCenterDeployment plan = new DataCenterDeployment(vm.getDataCenterId(), vm.getPodIdToDeployIn(), null, null, null, null);
         if (planToDeploy != null && planToDeploy.getDataCenterId() != 0) {

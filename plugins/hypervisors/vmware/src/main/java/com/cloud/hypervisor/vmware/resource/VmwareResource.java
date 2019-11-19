@@ -2764,6 +2764,9 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
     private static void configCustomExtraOption(List<OptionValue> extraOptions, VirtualMachineTO vmSpec) {
         // we no longer to validation anymore
         for (Map.Entry<String, String> entry : vmSpec.getDetails().entrySet()) {
+            if(entry.getKey().equalsIgnoreCase(VmDetailConstants.BOOT_MODE)) {
+                continue;
+            }
             OptionValue newVal = new OptionValue();
             newVal.setKey(entry.getKey());
             newVal.setValue(entry.getValue());

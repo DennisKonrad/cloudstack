@@ -3939,6 +3939,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     } else {
                         vm.setDetail(key, customParameters.get(key));
                     }
+
+                    if(key.equalsIgnoreCase("uefi")) {
+                        vm.setDetail(key,customParameters.get(key));
+                        continue;
+                    }
                 }
                 vm.setDetail(VmDetailConstants.DEPLOY_VM, "true");
 
@@ -4241,13 +4246,21 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         Long podId = null;
         Long clusterId = null;
         Long hostId = cmd.getHostId();
+        Map<VirtualMachineProfile.Param, Object> additonalParams = null;
         Map<Long, DiskOffering> diskOfferingMap = cmd.getDataDiskTemplateToDiskOfferingMap();
         if (cmd instanceof DeployVMCmdByAdmin) {
             DeployVMCmdByAdmin adminCmd = (DeployVMCmdByAdmin)cmd;
             podId = adminCmd.getPodId();
             clusterId = adminCmd.getClusterId();
         }
-        return startVirtualMachine(vmId, podId, clusterId, hostId, diskOfferingMap, null, cmd.getDeploymentPlanner());
+        if(MapUtils.isNotEmpty(cmd.getDetails()) && cmd.getDetails().containsKey("UEFI") ) {
+            additonalParams = new HashMap<VirtualMachineProfile.Param,Object>();
+            Map<String, String> map = cmd.getDetails();
+            additonalParams.put(VirtualMachineProfile.Param.UefiFlag, "Yes");
+            additonalParams.put(VirtualMachineProfile.Param.BootType, "UEFI");
+            additonalParams.put(VirtualMachineProfile.Param.BootMode, map.get("UEFI"));
+        }
+        return startVirtualMachine(vmId, podId, clusterId, hostId, diskOfferingMap, additonalParams, cmd.getDeploymentPlanner());
     }
 
     private UserVm startVirtualMachine(long vmId, Long podId, Long clusterId, Long hostId, Map<Long, DiskOffering> diskOfferingMap, Map<VirtualMachineProfile.Param, Object> additonalParams, String deploymentPlannerToUse)
@@ -4701,6 +4714,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 throw new InvalidParameterValueException("Can't find a planner by name " + deploymentPlannerToUse);
             }
         }
+        vmEntity.setParamsToEntity(additionalParams);
 
         String reservationId = vmEntity.reserve(planner, plan, new ExcludeList(), Long.toString(callerUser.getId()));
         vmEntity.deploy(reservationId, Long.toString(callerUser.getId()), params, deployOnGivenHost);
