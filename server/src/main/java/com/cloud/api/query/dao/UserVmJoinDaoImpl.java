@@ -66,7 +66,6 @@ import com.cloud.vm.dao.UserVmDetailsDao;
 @Component
 public class UserVmJoinDaoImpl extends GenericDaoBaseWithTagInformation<UserVmJoinVO, UserVmResponse> implements UserVmJoinDao {
     public static final Logger s_logger = Logger.getLogger(UserVmJoinDaoImpl.class);
-    private static final String UEFI = "UEFI";
 
     @Inject
     private ConfigurationDao  _configDao;
@@ -318,7 +317,7 @@ public class UserVmJoinDaoImpl extends GenericDaoBaseWithTagInformation<UserVmJo
                         (UserVmManager.DisplayVMOVFProperties.value() && userVmDetailVO.getName().startsWith(ApiConstants.OVF_PROPERTIES))) {
                     resourceDetails.put(userVmDetailVO.getName(), userVmDetailVO.getValue());
                 }
-                if (UEFI.equalsIgnoreCase(userVmDetailVO.getName())) {
+                if ((ApiConstants.BootType.UEFI.toString()).equalsIgnoreCase(userVmDetailVO.getName())) {
                     userVmResponse.setBootType("Uefi");
                     userVmResponse.setBootMode(userVmDetailVO.getValue().toLowerCase());
 

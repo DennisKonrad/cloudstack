@@ -757,4 +757,22 @@ public class ApiConstants {
     public enum DomainDetails {
         all, resource, min;
     }
+
+    public enum BootType {
+        UEFI, BIOS;
+
+        @Override
+        public String toString() {
+            return this.name();
+        }
+    }
+
+    public enum BootMode {
+        LEGACY, SECURE;
+
+        @Override
+        public String toString() {
+            return this.name();
+        }
+    }
 }

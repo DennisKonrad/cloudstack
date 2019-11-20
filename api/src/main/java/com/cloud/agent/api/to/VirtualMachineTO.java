@@ -64,6 +64,7 @@ public class VirtualMachineTO {
     Map<String, String> params;
     String uuid;
     String bootType;
+    String bootMode;
 
     DiskTO[] disks;
     NicTO[] nics;
@@ -388,4 +389,8 @@ public class VirtualMachineTO {
     public void setBootType(String bootType) {
         this.bootType = bootType;
     }
+
+    public String getBootMode() { return bootMode; }
+
+    public void setBootMode(String bootMode) { this.bootMode = bootMode; }
 }

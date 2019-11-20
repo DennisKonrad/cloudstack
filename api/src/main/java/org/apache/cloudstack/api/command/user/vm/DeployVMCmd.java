@@ -17,6 +17,7 @@
 package org.apache.cloudstack.api.command.user.vm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
+
+import com.cloud.utils.StringUtils;
 
 import org.apache.cloudstack.acl.RoleType;
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
@@ -250,6 +253,22 @@ public class DeployVMCmd extends BaseAsyncCreateCustomIdCmd implements SecurityG
         return domainId;
     }
 
+    private ApiConstants.BootType  getBootType() {
+
+        if (StringUtils.isNotBlank(bootType)) {
+            try {
+                String type = bootType.trim().toUpperCase();
+                return ApiConstants.BootType.valueOf(type);
+            } catch (IllegalArgumentException e) {
+                String errMesg = "Invalid bootType " + bootType + "Specified for vm " + getName()
+                        + " Valid values are: " + Arrays.toString(ApiConstants.BootType.values());
+                s_logger.warn(errMesg);
+                throw new InvalidParameterValueException(errMesg);
+            }
+        }
+        return null;
+    }
+
     public Map<String, String> getDetails() {
         Map<String, String> customparameterMap = new HashMap<String, String>();
         if (details != null && details.size() != 0) {
@@ -263,8 +282,8 @@ public class DeployVMCmd extends BaseAsyncCreateCustomIdCmd implements SecurityG
             }
         }
         if(getBootType() != null){ // export to get
-            if(getBootType().equalsIgnoreCase("UEFI")) {
-                customparameterMap.put("UEFI", getBootMode());
+            if(getBootType() == ApiConstants.BootType.UEFI) {
+                customparameterMap.put(getBootType().toString(), getBootMode().toString());
             }
         }
 
@@ -274,15 +293,20 @@ public class DeployVMCmd extends BaseAsyncCreateCustomIdCmd implements SecurityG
         return customparameterMap;
     }
 
-    public String getBootType() {
-        if (bootType != null && !("bios".equalsIgnoreCase(bootType) || "uefi".equalsIgnoreCase(bootType))) {
-            throw new InvalidParameterValueException("Invalid Boot Type");
-        }
-        return bootType;
-    }
 
-    public String getBootMode() {
-        return bootMode;
+    public ApiConstants.BootMode getBootMode() {
+        if (StringUtils.isNotBlank(bootMode)) {
+            try {
+                String mode = bootMode.trim().toUpperCase();
+                return ApiConstants.BootMode.valueOf(mode);
+            } catch (IllegalArgumentException e) {
+                String errMesg = "Invalid bootMode " + bootMode + "Specified for vm " + getName()
+                        + " Valid values are:  "+ Arrays.toString(ApiConstants.BootMode.values());
+                s_logger.warn(errMesg);
+                throw new InvalidParameterValueException(errMesg);
+                }
+        }
+        return null;
     }
 
 

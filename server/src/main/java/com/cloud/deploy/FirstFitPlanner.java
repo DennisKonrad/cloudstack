@@ -231,17 +231,16 @@ public class FirstFitPlanner extends AdapterBase implements DeploymentClusterPla
     }
 
     private Long getHostsByCapability(List<Long> hostList, String hostCapability) {
-        int totalHostswithCapability = 0;
         for (Long host : hostList) { //TODO: Fix this in single query instead of polling request for each Host
             Map<String, String> details = hostDetailsDao.findDetails(host);
             if (details.containsKey(Host.HOST_UEFI_ENABLE)) {
                 if (details.get(Host.HOST_UEFI_ENABLE).equalsIgnoreCase("Yes")) {
-                    totalHostswithCapability++;
+                    return new Long(1);
                 }
 
             }
         }
-        return totalHostswithCapability > 0 ? new Long(1) : new Long(0);
+        return new Long(0);
     }
 
     private List<Long> scanPodsForDestination(VirtualMachineProfile vmProfile, DeploymentPlan plan, ExcludeList avoid) {

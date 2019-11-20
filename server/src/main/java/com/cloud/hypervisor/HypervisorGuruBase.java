@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 
+import com.cloud.utils.StringUtils;
 import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
 import org.apache.commons.collections.CollectionUtils;
@@ -167,7 +168,7 @@ public abstract class HypervisorGuruBase extends AdapterBase implements Hypervis
         to.setBootArgs(vmProfile.getBootArgs());
 
         String bootType = (String)vmProfile.getParameter(new VirtualMachineProfile.Param("BootType"));
-        if (bootType != null && !bootType.isEmpty()) {
+        if (StringUtils.isNotBlank(bootType)) {
             to.setBootType(bootType);
         }
 

@@ -3940,8 +3940,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                         vm.setDetail(key, customParameters.get(key));
                     }
 
-                    if(key.equalsIgnoreCase("uefi")) {
-                        vm.setDetail(key,customParameters.get(key));
+                    if (key.equalsIgnoreCase(ApiConstants.BootType.UEFI.toString())) {
+                        vm.setDetail(key, customParameters.get(key));
                         continue;
                     }
                 }
@@ -4253,12 +4253,12 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             podId = adminCmd.getPodId();
             clusterId = adminCmd.getClusterId();
         }
-        if(MapUtils.isNotEmpty(cmd.getDetails()) && cmd.getDetails().containsKey("UEFI") ) {
-            additonalParams = new HashMap<VirtualMachineProfile.Param,Object>();
+        if (MapUtils.isNotEmpty(cmd.getDetails()) && cmd.getDetails().containsKey(ApiConstants.BootType.UEFI.toString())) {
+            additonalParams = new HashMap<VirtualMachineProfile.Param, Object>();
             Map<String, String> map = cmd.getDetails();
             additonalParams.put(VirtualMachineProfile.Param.UefiFlag, "Yes");
-            additonalParams.put(VirtualMachineProfile.Param.BootType, "UEFI");
-            additonalParams.put(VirtualMachineProfile.Param.BootMode, map.get("UEFI"));
+            additonalParams.put(VirtualMachineProfile.Param.BootType, ApiConstants.BootType.UEFI.toString());
+            additonalParams.put(VirtualMachineProfile.Param.BootMode, map.get(ApiConstants.BootType.UEFI.toString()));
         }
         return startVirtualMachine(vmId, podId, clusterId, hostId, diskOfferingMap, additonalParams, cmd.getDeploymentPlanner());
     }

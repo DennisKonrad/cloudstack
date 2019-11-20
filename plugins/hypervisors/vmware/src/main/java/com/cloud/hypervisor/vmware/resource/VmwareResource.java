@@ -1702,7 +1702,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
         String dataDiskController = vmSpec.getDetails().get(VmDetailConstants.DATA_DISK_CONTROLLER);
         String rootDiskController = vmSpec.getDetails().get(VmDetailConstants.ROOT_DISK_CONTROLLER);
         DiskTO rootDiskTO = null;
-        String bootMode = "BIOS";
+        String bootMode = ApiConstants.BootType.BIOS.toString();
         if (vmSpec.getDetails().containsKey(VmDetailConstants.BOOT_MODE)) {
             bootMode = vmSpec.getDetails().get(VmDetailConstants.BOOT_MODE);
         }
@@ -2265,9 +2265,9 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 }
             }
 
-            if (!bootMode.equalsIgnoreCase("BIOS")) {
+            if (!bootMode.equalsIgnoreCase(ApiConstants.BootType.BIOS.toString())) {
                 vmConfigSpec.setFirmware("efi");
-                if (bootMode.equalsIgnoreCase("UEFI_SECURE") ) {
+                if (vmSpec.getDetails().containsKey(ApiConstants.BootType.UEFI.toString()) && "secure".equalsIgnoreCase(vmSpec.getDetails().get(ApiConstants.BootType.UEFI.toString()))) {
                     VirtualMachineBootOptions bootOptions = new VirtualMachineBootOptions();
                     bootOptions.setEfiSecureBootEnabled(true);
                     vmConfigSpec.setBootOptions(bootOptions);
@@ -2764,7 +2764,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
     private static void configCustomExtraOption(List<OptionValue> extraOptions, VirtualMachineTO vmSpec) {
         // we no longer to validation anymore
         for (Map.Entry<String, String> entry : vmSpec.getDetails().entrySet()) {
-            if(entry.getKey().equalsIgnoreCase(VmDetailConstants.BOOT_MODE)) {
+            if (entry.getKey().equalsIgnoreCase(VmDetailConstants.BOOT_MODE)) {
                 continue;
             }
             OptionValue newVal = new OptionValue();

@@ -154,9 +154,8 @@ public class VMEntityManagerImpl implements VMEntityManager {
                 "yes".equalsIgnoreCase(vmEntityVO.getDetails().get(VirtualMachineProfile.Param.UefiFlag.getName())))
         {
             Map<String, String> details = vmEntityVO.getDetails();
-            vmProfile.getParameters().put(VirtualMachineProfile.Param.BootType, details.get(VirtualMachineProfile.Param.BootType));
-            vmProfile.getParameters().put(VirtualMachineProfile.Param.BootMode, details.get(VirtualMachineProfile.Param.BootMode));
-
+            vmProfile.getParameters().put(VirtualMachineProfile.Param.BootType, details.get(VirtualMachineProfile.Param.BootType.getName()));
+            vmProfile.getParameters().put(VirtualMachineProfile.Param.BootMode, details.get(VirtualMachineProfile.Param.BootMode.getName()));
         }
         DataCenterDeployment plan = new DataCenterDeployment(vm.getDataCenterId(), vm.getPodIdToDeployIn(), null, null, null, null);
         if (planToDeploy != null && planToDeploy.getDataCenterId() != 0) {

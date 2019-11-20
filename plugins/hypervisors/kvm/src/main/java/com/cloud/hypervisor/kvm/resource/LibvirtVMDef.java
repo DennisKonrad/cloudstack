@@ -58,11 +58,33 @@ public class LibvirtVMDef {
         }
 
         enum BootType {
-            UEFI, BIOS
+            UEFI("UEFI"), BIOS("BIOS");
+
+            String _type;
+
+            BootType(String type) {
+                _type = type;
+            }
+
+            @Override
+            public String toString() {
+                return _type;
+            }
         }
 
         enum BootMode {
-            LEGACY, SECURE
+            LEGACY("LEGACY"), SECURE("SECURE");
+
+            String _mode;
+
+            BootMode(String mode) {
+                _mode = mode;
+            }
+
+            @Override
+            public String toString() {
+                return _mode;
+            }
         }
 
         private GuestType _type;
@@ -694,7 +716,7 @@ public class LibvirtVMDef {
             } else if (bus == DiskBus.VIRTIO) {
                 return "vd" + getDevLabelSuffix(devId);
             } else if (bus == DiskBus.SATA){
-                if(!forIso) {
+                if (!forIso) {
                     return "sda";
                 }
             }
@@ -703,7 +725,7 @@ public class LibvirtVMDef {
             } else if(devId >= 2) {
                 devId += 2;
             }
-            return (DiskBus.SATA == bus ) ?"sdb":"hd" + getDevLabelSuffix(devId);
+            return (DiskBus.SATA == bus) ? "sdb" : "hd" + getDevLabelSuffix(devId);
 
         }
 

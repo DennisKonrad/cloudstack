@@ -481,11 +481,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     public StorageSubsystemCommandHandler getStorageHandler() {
         return storageHandler;
     }
-
-    public Properties getProperties() {
-        return _uefiProperties;
-    }
-
     private static final class KeyValueInterpreter extends OutputInterpreter {
         private final Map<String, String> map = new HashMap<String, String>();
 
@@ -614,7 +609,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         try {
             loadUefiProperties();
         } catch (FileNotFoundException e) {
-            s_logger.error("uefi properties file not found due to: "+e.getLocalizedMessage());
+            s_logger.error("uefi properties file not found due to: " + e.getLocalizedMessage());
         }
 
         _storage = new JavaStorageLayer();
@@ -1108,14 +1103,15 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     private void loadUefiProperties() throws FileNotFoundException {
 
-        if (_uefiProperties != null && _uefiProperties.getProperty("guest.loader.legacy") != null)
+        if (_uefiProperties != null && _uefiProperties.getProperty("guest.loader.legacy") != null) {
             return;
+        }
         final File file = PropertiesUtil.findConfigFile("uefi.properties");
         if (file == null) {
-            throw new FileNotFoundException("Unable to find uefi.properties.");
+            throw new FileNotFoundException("Unable to find file uefi.properties.");
         }
 
-        s_logger.info("uefi.properties found at " + file.getAbsolutePath());
+        s_logger.info("uefi.properties file found at " + file.getAbsolutePath());
         try {
             PropertiesUtil.loadFromFile(_uefiProperties, file);
             s_logger.info("guest.nvram.template.legacy = " + _uefiProperties.getProperty("guest.nvram.template.legacy"));
@@ -1123,7 +1119,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             s_logger.info("guest.nvram.template.secure = " + _uefiProperties.getProperty("guest.nvram.template.secure"));
             s_logger.info("guest.loader.secure =" + _uefiProperties.getProperty("guest.loader.secure"));
             s_logger.info("guest.nvram.path = " + _uefiProperties.getProperty("guest.nvram.path"));
-
         } catch (final FileNotFoundException ex) {
             throw new CloudRuntimeException("Cannot find the file: " + file.getAbsolutePath(), ex);
         } catch (final IOException ex) {
@@ -2115,13 +2110,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         boolean isUefiEnabled = false;
         boolean isSecureBoot = false;
         String bootMode =null;
-        if (MapUtils.isNotEmpty(customParams) && customParams.containsKey("UEFI")) {
+        if (MapUtils.isNotEmpty(customParams) && customParams.containsKey(GuestDef.BootType.UEFI.toString())) {
             isUefiEnabled = true;
-            bootMode = customParams.get("UEFI");
+            bootMode = customParams.get(GuestDef.BootType.UEFI.toString());
             if (StringUtils.isNotBlank(bootMode) && "secure".equalsIgnoreCase(bootMode)) {
                 isSecureBoot = true;
             }
-
         }
 
         Map<String, String> extraConfig = vmTO.getExtraConfig();
@@ -2144,10 +2138,10 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         guest.setGuestArch(_guestCpuArch != null ? _guestCpuArch : vmTO.getArch());
         guest.setMachineType(_guestCpuArch != null && _guestCpuArch.equals("aarch64") ? "virt" : "pc");
         guest.setBootType(GuestDef.BootType.BIOS);
-        if (MapUtils.isNotEmpty(customParams) && customParams.containsKey("UEFI")) {
+        if (MapUtils.isNotEmpty(customParams) && customParams.containsKey(GuestDef.BootType.UEFI.toString())) {
             guest.setBootType(GuestDef.BootType.UEFI);
             guest.setBootMode(GuestDef.BootMode.LEGACY);
-            if (StringUtils.isNotBlank(customParams.get("UEFI")) && "secure".equalsIgnoreCase(customParams.get("UEFI"))) {
+            if (StringUtils.isNotBlank(customParams.get(GuestDef.BootType.UEFI.toString())) && "secure".equalsIgnoreCase(customParams.get(GuestDef.BootType.UEFI.toString()))) {
                 guest.setMachineType("q35");
                 guest.setBootMode(GuestDef.BootMode.SECURE); // setting to secure mode
             }
@@ -2156,16 +2150,19 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         guest.setBootOrder(GuestDef.BootOrder.CDROM);
         guest.setBootOrder(GuestDef.BootOrder.HARDISK);
 
-        if(isUefiEnabled) {
-
-            if (_uefiProperties.getProperty(GuestDef.GUEST_LOADER_SECURE) != null && "secure".equalsIgnoreCase(bootMode))
+        if (isUefiEnabled) {
+            if (_uefiProperties.getProperty(GuestDef.GUEST_LOADER_SECURE) != null && "secure".equalsIgnoreCase(bootMode)) {
                 guest.setLoader(_uefiProperties.getProperty(GuestDef.GUEST_LOADER_SECURE));
+            }
 
-            if (_uefiProperties.getProperty(GuestDef.GUEST_LOADER_LEGACY) != null && "legacy".equalsIgnoreCase(bootMode))
+            if (_uefiProperties.getProperty(GuestDef.GUEST_LOADER_LEGACY) != null && "legacy".equalsIgnoreCase(bootMode)) {
                 guest.setLoader(_uefiProperties.getProperty(GuestDef.GUEST_LOADER_LEGACY));
+            }
 
-            if (_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_PATH) != null)
+            if (_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_PATH) != null) {
                 guest.setNvram(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_PATH));
+            }
+
             if (isSecureBoot) {
                 if (_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_SECURE) != null && "secure".equalsIgnoreCase(bootMode)) {
                     guest.setNvramTemplate(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_SECURE));
@@ -2175,7 +2172,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                     guest.setNvramTemplate(_uefiProperties.getProperty(GuestDef.GUEST_NVRAM_TEMPLATE_LEGACY));
                 }
             }
-
         }
 
             vm.addComp(guest);
@@ -2238,7 +2234,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         features.addFeatures("pae");
         features.addFeatures("apic");
         features.addFeatures("acpi");
-        if(isUefiEnabled && isSecureMode(customParams.get("UEFI"))) {
+        if (isUefiEnabled && isSecureMode(customParams.get(GuestDef.BootType.UEFI.toString()))) {
             features.addFeatures("smm");
         }
 
@@ -2392,8 +2388,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         });
 
-        if (MapUtils.isNotEmpty(details) && details.containsKey("UEFI")) {
-            isSecureBoot = isSecureMode(details.get("UEFI"));
+        if (MapUtils.isNotEmpty(details) && details.containsKey(GuestDef.BootType.UEFI.toString())) {
+            isSecureBoot = isSecureMode(details.get(GuestDef.BootType.UEFI.toString()));
         }
         if (vmSpec.getOs().toLowerCase().contains("window")) {
             isWindowsTemplate =true;
@@ -2458,7 +2454,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 if (volPath == null) {
                     if (isSecureBoot) {
                         disk.defISODisk(null, devId,isSecureBoot,isWindowsTemplate);
-
                     } else {
                         /* Add iso as placeholder */
                         disk.defISODisk(null, devId);
