@@ -42,7 +42,6 @@ public class GetHostStatsAnswer extends Answer implements HostStats {
         hostStats = new HostStatsEntry();
 
         hostStats.setCpuUtilization(cpuUtilization);
-        //hostStats.setAverageLoad(loadAverage);
         hostStats.setFreeMemoryKBs(freeMemoryKBs);
         hostStats.setTotalMemoryKBs(totalMemoryKBs);
         hostStats.setNetworkReadKBs(networkReadKBs);
