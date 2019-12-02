@@ -68,7 +68,7 @@ public class GetHostStatsAnswer extends Answer implements HostStats {
     public double getCpuUtilization() {
         return hostStats.getCpuUtilization();
     }
-    
+
     @Override
     public double getAverageLoad() {
         return hostStats.getLoadAverage();
