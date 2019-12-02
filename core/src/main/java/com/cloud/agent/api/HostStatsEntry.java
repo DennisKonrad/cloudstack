@@ -103,6 +103,14 @@ public class HostStatsEntry implements HostStats {
         this.cpuUtilization = cpuUtilization;
     }
 
+    public double getCpuAverageLoad() {
+        return this.cpuUtilization;
+    }
+
+    public void setCpuAverageLoad(double cpuAvgLoad) {
+        this.averageLoad = cpuAvgLoad;
+    }
+
     @Override
     public double getUsedMemory() {
         return (totalMemoryKBs - freeMemoryKBs) * 1024;

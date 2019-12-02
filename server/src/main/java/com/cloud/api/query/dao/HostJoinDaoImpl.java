@@ -194,8 +194,7 @@ public class HostJoinDaoImpl extends GenericDaoBase<HostJoinVO, Long> implements
                     float cpuUtil = (float)hostStats.getCpuUtilization();
                     cpuUsed = decimalFormat.format(cpuUtil) + "%";
                     hostResponse.setCpuUsed(cpuUsed);
-                    float cpuavgload = (float)hostStats.getCpuAverageLoad();
-                    hostResponse.setCpuAverageLoad(cpuavgload);
+                    hostResponse.setCpuAverageLoad((new Double(hostStats.getCpuAverageLoad())).longValue());
                     hostResponse.setMemoryUsed((new Double(hostStats.getUsedMemory())).longValue());
                     hostResponse.setNetworkKbsRead((new Double(hostStats.getNetworkReadKBs())).longValue());
                     hostResponse.setNetworkKbsWrite((new Double(hostStats.getNetworkWriteKBs())).longValue());
