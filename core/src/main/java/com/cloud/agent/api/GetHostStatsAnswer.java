@@ -42,6 +42,7 @@ public class GetHostStatsAnswer extends Answer implements HostStats {
         hostStats = new HostStatsEntry();
 
         hostStats.setCpuUtilization(cpuUtilization);
+        //hostStats.setAverageLoad(loadAverage);
         hostStats.setFreeMemoryKBs(freeMemoryKBs);
         hostStats.setTotalMemoryKBs(totalMemoryKBs);
         hostStats.setNetworkReadKBs(networkReadKBs);
@@ -67,6 +68,11 @@ public class GetHostStatsAnswer extends Answer implements HostStats {
     @Override
     public double getCpuUtilization() {
         return hostStats.getCpuUtilization();
+    }
+    
+    @Override
+    public double getAverageLoad() {
+        return hostStats.getLoadAverage();
     }
 
     @Override
