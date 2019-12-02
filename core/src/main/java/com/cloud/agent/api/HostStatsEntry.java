@@ -104,7 +104,7 @@ public class HostStatsEntry implements HostStats {
     }
 
     public double getCpuAverageLoad() {
-        return this.cpuUtilization;
+        return this.averageLoad;
     }
 
     public void setCpuAverageLoad(double cpuAvgLoad) {

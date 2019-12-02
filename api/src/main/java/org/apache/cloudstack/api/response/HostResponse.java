@@ -337,7 +337,7 @@ public class HostResponse extends BaseResponse {
         this.cpuUsed = cpuUsed;
     }
 
-    public void setAverageLoad(Long averageLoad) {
+    public void setCpuAverageLoad(Long averageLoad) {
         this.averageLoad = averageLoad;
     }
 
