@@ -35,6 +35,6 @@ public interface HostStats {
 
     public HostStats getHostStats();
 
-    // public double getAverageLoad();
+    public double getAverageLoad();
     // public double getXapiMemoryUsageKBs();
 }

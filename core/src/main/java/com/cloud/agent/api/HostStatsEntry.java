@@ -104,7 +104,7 @@ public class HostStatsEntry implements HostStats {
     }
 
     @Override
-    public double getCpuAverageLoad() {
+    public double getAverageLoad() {
         return this.averageLoad;
     }
 
