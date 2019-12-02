@@ -103,6 +103,7 @@ public class HostStatsEntry implements HostStats {
         this.cpuUtilization = cpuUtilization;
     }
 
+    @Override
     public double getCpuAverageLoad() {
         return this.averageLoad;
     }
