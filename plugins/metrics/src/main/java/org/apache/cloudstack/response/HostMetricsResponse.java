@@ -121,9 +121,9 @@ public class HostMetricsResponse extends HostResponse {
         }
     }
 
-    public void setLoadAverage(final Long loadAverage) {
+    public void setLoadAverage(final Double loadAverage) {
         if (loadAverage != null) {
-            this.loadAverage = String.format("%.2f", Double.valueOf(loadAverage));
+            this.loadAverage = String.format("%.2f", loadAverage);
         }
     }
 
