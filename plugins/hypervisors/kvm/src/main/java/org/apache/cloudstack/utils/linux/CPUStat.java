@@ -83,8 +83,9 @@ public class CPUStat {
 
     public Double getCpuLoadAverage() {
         File f = new File(_loadavgFile);
+        String[] load = {"0.0"};
         try (Scanner scanner = new Scanner(f,"UTF-8");) {
-            String[] load = scanner.useDelimiter("\\Z").next().split("\\s+");
+            load = scanner.useDelimiter("\\Z").next().split("\\s+");
         } catch (FileNotFoundException ex) {
             s_logger.warn("File " + _uptimeFile + " not found:" + ex.toString());
         }
