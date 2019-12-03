@@ -89,7 +89,7 @@ public class CPUStat {
         } catch (FileNotFoundException ex) {
             s_logger.warn("File " + _uptimeFile + " not found:" + ex.toString());
         }
-        return load[0];
+        return Double.parseDouble(load[0]);
     }
 
     public Double getCpuUsedPercent() {
