@@ -70,7 +70,7 @@ public class GetHostStatsAnswer extends Answer implements HostStats {
     }
 
     @Override
-    public double getAverageLoad() {
+    public double getLoadAverage() {
         return hostStats.getLoadAverage();
     }
 
