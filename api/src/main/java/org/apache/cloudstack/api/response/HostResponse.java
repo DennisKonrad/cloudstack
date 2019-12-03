@@ -570,7 +570,7 @@ public class HostResponse extends BaseResponse {
         return cpuUsed;
     }
 
-    public Long getAverageLoad() {
+    public Double getAverageLoad() {
         return averageLoad;
     }
 
