@@ -114,9 +114,9 @@ public class HostResponse extends BaseResponse {
     @Param(description = "the amount of the host's CPU after applying the cpu.overprovisioning.factor ")
     private String cpuWithOverprovisioning;
 
-    @SerializedName("cpuaverageload")
+    @SerializedName("cpuloadaverage ")
     @Param(description = "the cpu average load on the host")
-    private Double cpuaverageload;
+    private Double cpuloadaverage ;
 
     @SerializedName("networkkbsread")
     @Param(description = "the incoming network traffic on the host")
@@ -338,7 +338,7 @@ public class HostResponse extends BaseResponse {
     }
 
     public void setCpuAverageLoad(Double averageLoad) {
-        this.cpuaverageload = averageLoad;
+        this.cpuloadaverage  = averageLoad;
     }
 
     public void setNetworkKbsRead(Long networkKbsRead) {
@@ -571,7 +571,7 @@ public class HostResponse extends BaseResponse {
     }
 
     public Double getAverageLoad() {
-        return cpuaverageload;
+        return cpuloadaverage ;
     }
 
     public Long getNetworkKbsRead() {
