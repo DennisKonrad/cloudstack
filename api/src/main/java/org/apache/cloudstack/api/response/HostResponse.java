@@ -571,7 +571,7 @@ public class HostResponse extends BaseResponse {
     }
 
     public Double getAverageLoad() {
-        return cpuloadaverage ;
+        return cpuloadaverage;
     }
 
     public Long getNetworkKbsRead() {
