@@ -418,9 +418,10 @@ public class ConsoleProxyManagerImpl extends ManagerBase implements ConsoleProxy
             return null;
         }
 
-        if (vm != null && vm.getState() != State.Starting && vm.getState() != State.Running) {
+        if (vm != null && vm.getState() != State.Starting && vm.getState() != State.Running
+                && vm.getState() != State.Stopping && vm.getState() != State.Migrating) {
             if (s_logger.isInfoEnabled()) {
-                s_logger.info("Detected that vm : " + vmId + " is not currently in starting or running state, we will fail the proxy assignment for it");
+                s_logger.info("Detected that vm : " + vmId + " is not currently in starting or running or stopping or migrating state, we will fail the proxy assignment for it");
             }
             return null;
         }
@@ -934,7 +935,7 @@ public class ConsoleProxyManagerImpl extends ManagerBase implements ConsoleProxy
         }
         List<ConsoleProxyVO> l =
             _consoleProxyDao.getProxyListInStates(dcId, VirtualMachine.State.Starting, VirtualMachine.State.Running, VirtualMachine.State.Stopping,
-                VirtualMachine.State.Stopped, VirtualMachine.State.Migrating, VirtualMachine.State.Shutdowned, VirtualMachine.State.Unknown);
+                VirtualMachine.State.Stopped, VirtualMachine.State.Migrating, VirtualMachine.State.Shutdown, VirtualMachine.State.Unknown);
 
         String value = _configDao.getValue(Config.ConsoleProxyLaunchMax.key());
         int launchLimit = NumbersUtil.parseInt(value, 10);

@@ -3933,6 +3933,56 @@
                                                 }
                                             },
 
+                                            retrieveDiagnostics: {
+                                                label: 'label.action.get.diagnostics',
+                                                messages: {
+                                                    notification: function (args) {
+                                                        return 'label.action.get.diagnostics';
+                                                    },
+                                                    complete: function(args) {
+                                                        var url = args.url;
+                                                        var htmlMsg = _l('message.download.diagnostics');
+                                                        var htmlMsg2 = htmlMsg.replace(/#/, url).replace(/00000/, url);
+                                                        return htmlMsg2;
+                                                    }
+                                                },
+                                                createForm: {
+                                                    title: 'label.action.get.diagnostics',
+                                                    desc: 'label.get.diagnostics.desc',
+                                                    fields: {
+                                                        files: {
+                                                            label: 'label.get.diagnostics.files'
+                                                        }
+                                                    }
+                                                },
+                                                action: function (args) {
+                                                    $.ajax({
+                                                        url: createURL("getDiagnosticsData&targetid=" + args.context.routers[0].id + "&files=" + args.data.files),
+                                                        dataType: "json",
+                                                        async: true,
+                                                        success: function(json) {
+                                                            var jid = json.getdiagnosticsdataresponse.jobid;
+                                                            args.response.success({
+                                                                _custom: {
+                                                                    jobId : jid,
+                                                                    getUpdatedItem: function (json) {
+                                                                        return json.queryasyncjobresultresponse.jobresult.diagnostics;
+
+                                                                    },
+                                                                    getActionFilter: function(){
+                                                                        return systemvmActionfilter;
+                                                                   }
+                                                                }
+
+                                                            });
+                                                        }
+                                                    }); //end ajax
+                                                },
+                                                notification: {
+                                                    poll: pollAsyncJobResult
+                                                }
+                                            },
+
                                             viewConsole: {
                                                 label: 'label.view.console',
                                                 action: {
@@ -8847,6 +8897,56 @@
                                                         }
                                                     },
 
+                                                    retrieveDiagnostics: {
+                                                        label: 'label.action.get.diagnostics',
+                                                        messages: {
+                                                            notification: function (args) {
+                                                                return 'label.action.get.diagnostics';
+                                                            },
+                                                            complete: function(args) {
+                                                                var url = args.url;
+                                                                var htmlMsg = _l('message.download.diagnostics');
+                                                                var htmlMsg2 = htmlMsg.replace(/#/, url).replace(/00000/, url);
+                                                                return htmlMsg2;
+                                                            }
+                                                        },
+                                                        createForm: {
+                                                            title: 'label.action.get.diagnostics',
+                                                            desc: '',
+                                                            fields: {
+                                                                files: {
+                                                                    label: 'label.get.diagnostics.files'
+                                                                }
+                                                            }
+                                                        },
+                                                        action: function (args) {
+                                                            $.ajax({
+                                                                url: createURL("getDiagnosticsData&targetid=" + args.context.systemVMs[0].id + "&files=" + args.data.files),
+                                                                dataType: "json",
+                                                                async: true,
+                                                                success: function(json) {
+                                                                    var jid = json.getdiagnosticsdataresponse.jobid;
+                                                                    args.response.success({
+                                                                        _custom: {
+                                                                            jobId : jid,
+                                                                            getUpdatedItem: function (json) {
+                                                                                return json.queryasyncjobresultresponse.jobresult.diagnostics;
+
+                                                                            },
+                                                                            getActionFilter: function(){
+                                                                                return systemvmActionfilter;
+                                                                           }
+                                                                        }
+
+                                                                    });
+                                                                }
+                                                            }); //end ajax
+                                                        },
+                                                        notification: {
+                                                            poll: pollAsyncJobResult
+                                                        }
+                                                    },
+
                                                     scaleUp: {
                                                         label: 'label.change.service.offering',
                                                         createForm: {
@@ -10293,6 +10393,56 @@
                                         }
                                     },
 
+                                    retrieveDiagnostics: {
+                                        label: 'label.action.get.diagnostics',
+                                        messages: {
+                                            notification: function (args) {
+                                                return 'label.action.get.diagnostics';
+                                            },
+                                            complete: function(args) {
+                                                var url = args.url;
+                                                var htmlMsg = _l('message.download.diagnostics');
+                                                var htmlMsg2 = htmlMsg.replace(/#/, url).replace(/00000/, url);
+                                                return htmlMsg2;
+                                            }
+                                        },
+                                        createForm: {
+                                            title: 'label.action.get.diagnostics',
+                                            desc: 'label.get.diagnostics.desc',
+                                            fields: {
+                                                files: {
+                                                    label: 'label.get.diagnostics.files'
+                                                }
+                                            }
+                                        },
+                                        action: function (args) {
+                                            $.ajax({
+                                                url: createURL("getDiagnosticsData&targetid=" + args.context.routers[0].id + "&files=" + args.data.files),
+                                                dataType: "json",
+                                                async: true,
+                                                success: function(json) {
+                                                    var jid = json.getdiagnosticsdataresponse.jobid;
+                                                    args.response.success({
+                                                        _custom: {
+                                                            jobId : jid,
+                                                            getUpdatedItem: function (json) {
+                                                                return json.queryasyncjobresultresponse.jobresult.diagnostics;
+
+                                                            },
+                                                            getActionFilter: function(){
+                                                                return systemvmActionfilter;
+                                                           }
+                                                        }
+
+                                                    });
+                                                }
+                                            }); //end ajax
+                                        },
+                                        notification: {
+                                            poll: pollAsyncJobResult
+                                        }
+                                    },
+
                                     scaleUp: { //*** Infrastructure > Virtual Routers > change service offering ***
                                         label: 'label.change.service.offering',
                                         createForm: {
@@ -11622,6 +11772,56 @@
                                         async: true,
                                         success: function(json) {
                                             var jid = json.rundiagnosticsresponse.jobid;
+                                            args.response.success({
+                                                _custom: {
+                                                    jobId : jid,
+                                                    getUpdatedItem: function (json) {
+                                                        return json.queryasyncjobresultresponse.jobresult.diagnostics;
+
+                                                    },
+                                                    getActionFilter: function(){
+                                                        return systemvmActionfilter;
+                                                   }
+                                                }
+
+                                            });
+                                        }
+                                    }); //end ajax
+                                },
+                                notification: {
+                                    poll: pollAsyncJobResult
+                                }
+                            },
+
+                            retrieveDiagnostics: {
+                                label: 'label.action.get.diagnostics',
+                                messages: {
+                                    notification: function (args) {
+                                        return 'label.action.get.diagnostics';
+                                    },
+                                    complete: function(args) {
+                                        var url = args.url;
+                                        var htmlMsg = _l('message.download.diagnostics');
+                                        var htmlMsg2 = htmlMsg.replace(/#/, url).replace(/00000/, url);
+                                        return htmlMsg2;
+                                    }
+                                },
+                                createForm: {
+                                    title: 'label.action.get.diagnostics',
+                                    desc: 'label.get.diagnostics.desc',
+                                    fields: {
+                                        files: {
+                                            label: 'label.get.diagnostics.files'
+                                        }
+                                    }
+                                },
+                                action: function (args) {
+                                    $.ajax({
+                                        url: createURL("getDiagnosticsData&targetid=" + args.context.systemVMs[0].id + "&files=" + args.data.files),
+                                        dataType: "json",
+                                        async: true,
+                                        success: function(json) {
+                                            var jid = json.getdiagnosticsdataresponse.jobid;
                                             args.response.success({
                                                 _custom: {
                                                     jobId : jid,
@@ -17162,7 +17362,8 @@
                                     title: 'label.outofbandmanagement.action.issue',
                                     desc: function(args) {
                                           var host = args.context.hosts[0];
-                                          if (host.resourcestate == 'Maintenance' || host.resourcestate == 'PrepareForMaintenance' || host.resourcestate == 'ErrorInMaintenance') {
+                                          if (host.resourcestate == 'Maintenance' || host.resourcestate == 'PrepareForMaintenance' ||
+                                                host.resourcestate == 'ErrorInPrepareForMaintenance' || host.resourcestate == 'ErrorInMaintenance') {
                                               return _l('message.outofbandmanagement.action.maintenance');
                                           }
                                     },
@@ -17776,6 +17977,7 @@
                                 'Down': 'off',
                                 'Removed': 'off',
                                 'ErrorInMaintenance': 'off',
+                                'ErrorInPrepareForMaintenance': 'warning',
                                 'PrepareForMaintenance': 'warning',
                                 'CancelMaintenance': 'warning',
                                 'Maintenance': 'warning',
@@ -21975,7 +22177,7 @@
             allowedActions.push("edit");
             allowedActions.push("enableMaintenanceMode");
             allowedActions.push("cancelMaintenanceMode");
-        } else if (jsonObj.resourcestate == "PrepareForMaintenance") {
+        } else if (jsonObj.resourcestate == "PrepareForMaintenance" || jsonObj.resourcestate == 'ErrorInPrepareForMaintenance') {
             allowedActions.push("edit");
             allowedActions.push("cancelMaintenanceMode");
         } else if (jsonObj.resourcestate == "Maintenance") {
@@ -22029,7 +22231,7 @@
         } else if (jsonObj.state == "ErrorInMaintenance") {
             allowedActions.push("enableMaintenanceMode");
             allowedActions.push("cancelMaintenanceMode");
-        } else if (jsonObj.state == "PrepareForMaintenance") {
+        } else if (jsonObj.state == "PrepareForMaintenance" || jsonObj.resourcestate == "ErrorInPrepareForMaintenance") {
             allowedActions.push("cancelMaintenanceMode");
         } else if (jsonObj.state == "Maintenance") {
             allowedActions.push("cancelMaintenanceMode");
@@ -22070,10 +22272,7 @@
             if (isAdmin()) {
                 allowedActions.push("migrate");
                 allowedActions.push("diagnostics");
-            }
-        } else if (jsonObj.state == 'Starting') {
-            if (isAdmin()) {
-                allowedActions.push("viewConsole");
+                allowedActions.push("retrieveDiagnostics");
             }
         } else if (jsonObj.state == 'Stopped') {
             allowedActions.push("start");
@@ -22082,6 +22281,9 @@
             allowedActions.push("scaleUp");
 
             allowedActions.push("remove");
+        }
+        if (jsonObj.state == 'Starting' || jsonObj.state == 'Stopping' || jsonObj.state == 'Migrating') {
+            allowedActions.push("viewConsole");
         }
         return allowedActions;
     }
@@ -22095,12 +22297,11 @@
             allowedActions.push("viewConsole");
             if (isAdmin())
             allowedActions.push("migrate");
-        } else if (jsonObj.state == 'Starting') {
-            if (isAdmin()) {
-                allowedActions.push("viewConsole");
-            }
         } else if (jsonObj.state == 'Stopped') {
             allowedActions.push("start");
+        }
+        if (jsonObj.state == 'Starting' || jsonObj.state == 'Stopping' || jsonObj.state == 'Migrating') {
+            allowedActions.push("viewConsole");
         }
         return allowedActions;
     }
@@ -22123,10 +22324,7 @@
             if (isAdmin()) {
                 allowedActions.push("migrate");
                 allowedActions.push("diagnostics");
-            }
-        } else if (jsonObj.state == 'Starting') {
-            if (isAdmin()) {
-                allowedActions.push("viewConsole");
+                allowedActions.push("retrieveDiagnostics");
             }
         } else if (jsonObj.state == 'Stopped') {
             allowedActions.push("start");
@@ -22137,6 +22335,9 @@
             allowedActions.push("remove");
         } else if (jsonObj.state == 'Error') {
             allowedActions.push("remove");
+        }
+        if (jsonObj.state == 'Starting' || jsonObj.state == 'Stopping' || jsonObj.state == 'Migrating') {
+            allowedActions.push("viewConsole");
         }
         return allowedActions;
     }
