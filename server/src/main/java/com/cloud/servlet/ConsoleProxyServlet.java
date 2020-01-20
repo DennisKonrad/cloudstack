@@ -41,7 +41,6 @@ import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
-import org.apache.cloudstack.framework.security.keys.KeysManager;
 import com.cloud.consoleproxy.ConsoleProxyManager;
 import com.cloud.exception.PermissionDeniedException;
 import com.cloud.host.HostVO;
