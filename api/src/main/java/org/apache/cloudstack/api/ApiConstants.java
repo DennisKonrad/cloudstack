@@ -747,6 +747,8 @@ public class ApiConstants {
     public static final String TARGET_ID = "targetid";
     public static final String FILES = "files";
     public static final String VOLUME_IDS = "volumeids";
+    public static final String BOOT_TYPE ="boottype";
+    public static final String BOOT_MODE ="bootmode";
 
     public enum HostDetails {
         all, capacity, events, stats, min;
@@ -758,5 +760,23 @@ public class ApiConstants {
 
     public enum DomainDetails {
         all, resource, min;
+    }
+
+    public enum BootType {
+        UEFI, BIOS;
+
+        @Override
+        public String toString() {
+            return this.name();
+        }
+    }
+
+    public enum BootMode {
+        LEGACY, SECURE;
+
+        @Override
+        public String toString() {
+            return this.name();
+        }
     }
 }
