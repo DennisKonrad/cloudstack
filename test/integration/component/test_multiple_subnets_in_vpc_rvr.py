@@ -20,6 +20,7 @@ Tests of acquiring IPs in multiple subnets for isolated network or vpc
 """
 
 from nose.plugins.attrib import attr
+from marvin.cloudstackAPI import rebootRouter
 from marvin.cloudstackTestCase import cloudstackTestCase, unittest
 from marvin.lib.utils import (validateList,
                               get_host_credentials,
@@ -34,6 +35,7 @@ from marvin.lib.base import (Account,
                              NetworkOffering,
                              VPC,
                              VpcOffering,
+                             StaticNATRule,
                              NATRule,
                              PublicIPAddress,
                              PublicIpRange)
@@ -105,6 +107,23 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
         except Exception as e:
             raise Exception("Warning: Exception during cleanup : %s" % e)
         return
+
+    def get_router(self, router_id):
+        routers = list_routers(
+            self.apiclient,
+            id=router_id,
+            listall=True)
+        self.assertEqual(
+            isinstance(routers, list),
+            True,
+            "Check for list routers response return valid data"
+        )
+        self.assertNotEqual(
+            len(routers),
+            0,
+            "Check list router response"
+        )
+        return routers[0]
 
     def get_routers(self, network_id):
         routers = list_routers(
@@ -254,7 +273,7 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
         #   verify the IPs in VR. eth1 -> source nat IP, eth2 -> tier 1, eth3 -> new ip 3, eth4 -> tier 2
 
         # 13. create new public ip range 2
-        # 14. get a free ip 4 in new ip range 2, assign to network, and create port forwarding rules (ssh) to the vm
+        # 14. get a free ip 4 in new ip range 2, assign to network, and enable static nat to vm 2 in tier 2
         #   verify the available nics in VR should be "eth0,eth1,eth2,eth3,eth4,eth5,"
         #   verify the IPs in VR. eth1 -> source nat IP, eth2 -> tier 1, eth3 -> new ip 3, eth4 -> tier 2, eth5 -> new ip 4
         # 15. get a free ip 5 in new ip range 2, assign to network, and create port forwarding rules (ssh) to the vm
@@ -433,10 +452,9 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
             ipaddress=ip_address_1
         )
 
-        nat_rule = NATRule.create(
+        StaticNATRule.enable(
             self.apiclient,
-            self.virtual_machine1,
-            self.services["natrule"],
+            virtualmachineid=self.virtual_machine1.id,
             ipaddressid=ipaddress_1.ipaddress.id,
             networkid=vpc_tier_1.id
         )
@@ -563,7 +581,7 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
         )
 
         try:
-            self.virtual_machine1 = VirtualMachine.create(
+            self.virtual_machine2 = VirtualMachine.create(
                 self.apiclient,
                 self.services["virtual_machine"],
                 accountid=self.account1.name,
@@ -603,7 +621,7 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
         )
         self.cleanup.append(self.public_ip_range2)
 
-        # 14. get a free ip 4 in new ip range 2, assign to network, and create port forwarding rules (ssh) to the vm
+        # 14. get a free ip 4 in new ip range 2, assign to network, and enable static nat to vm 2 in tier 2
         #   verify the available nics in VR should be "eth0,eth1,eth2,eth3,eth4,eth5,"
         #   verify the IPs in VR. eth1 -> source nat IP, eth2 -> tier 1, eth3 -> new ip 3, eth4 -> tier 2, eth5 -> new ip 4
         ip_address_4 = self.get_free_ipaddress(self.public_ip_range2.vlan.id)
@@ -614,10 +632,9 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
             ipaddress=ip_address_4
         )
 
-        nat_rule = NATRule.create(
+        StaticNATRule.enable(
             self.apiclient,
-            self.virtual_machine1,
-            self.services["natrule"],
+            virtualmachineid=self.virtual_machine2.id,
             ipaddressid=ipaddress_4.ipaddress.id,
             networkid=vpc_tier_2.id
         )
@@ -647,7 +664,7 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
 
         nat_rule = NATRule.create(
             self.apiclient,
-            self.virtual_machine1,
+            self.virtual_machine2,
             self.services["natrule"],
             ipaddressid=ipaddress_5.ipaddress.id,
             networkid=vpc_tier_2.id
@@ -678,7 +695,7 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
 
         nat_rule = NATRule.create(
             self.apiclient,
-            self.virtual_machine1,
+            self.virtual_machine2,
             self.services["natrule"],
             ipaddressid=ipaddress_6.ipaddress.id,
             networkid=vpc_tier_2.id
@@ -789,6 +806,21 @@ class TestMultiplePublicIpSubnets(cloudstackTestCase):
             self.verify_ip_address_in_router(router, host, tier1_Ip, "eth2", True)
             self.verify_ip_address_in_router(router, host, tier2_Ip, "eth4", True)
             self.verify_ip_address_in_router(router, host, ipaddress_6.ipaddress.ipaddress, "eth5", True)
+
+        # reboot router
+        for router in routers:
+            cmd = rebootRouter.rebootRouterCmd()
+            cmd.id = router.id
+            self.apiclient.rebootRouter(cmd)
+            router = self.get_router(router.id)
+            host = self.get_router_host(router)
+            self.verify_network_interfaces_in_router(router, host, "eth0,eth1,eth2,eth3,eth4,")
+            controlIp, sourcenatIp, tier1_Ip, tier2_Ip = self.get_vpc_router_ips(router)
+            self.verify_ip_address_in_router(router, host, controlIp, "eth0", True)
+            self.verify_ip_address_in_router(router, host, sourcenatIp, "eth1", True)
+            self.verify_ip_address_in_router(router, host, ipaddress_6.ipaddress.ipaddress, "eth2", True)
+            self.verify_ip_address_in_router(router, host, tier1_Ip, "eth3", True)
+            self.verify_ip_address_in_router(router, host, tier2_Ip, "eth4", True)
 
         # 23. restart VPC with cleanup
         self.vpc1.restart(self.apiclient, cleanup=True)
