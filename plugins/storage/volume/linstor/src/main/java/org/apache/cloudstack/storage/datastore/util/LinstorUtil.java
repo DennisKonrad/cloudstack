@@ -58,6 +58,7 @@ public class LinstorUtil {
 
     public static String getBestErrorMessage(ApiCallRcList answers) {
         return answers != null && !answers.isEmpty() ?
+<<<<<<< HEAD
             answers.stream()
                 .filter(ApiCallRc::isError)
                 .findFirst()
