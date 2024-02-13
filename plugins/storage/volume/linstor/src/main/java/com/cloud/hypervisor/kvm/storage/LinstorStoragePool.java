@@ -20,15 +20,22 @@ import java.util.List;
 import java.util.Map;
 
 import com.cloud.storage.Storage;
+import com.cloud.utils.exception.CloudRuntimeException;
+import com.cloud.utils.script.OutputInterpreter;
+import com.cloud.utils.script.Script;
 import org.apache.cloudstack.utils.qemu.QemuImg;
+import org.apache.log4j.Logger;
+import org.joda.time.Duration;
 
 public class LinstorStoragePool implements KVMStoragePool {
+    private static final Logger s_logger = Logger.getLogger(LinstorStoragePool.class);
     private final String _uuid;
     private final String _sourceHost;
     private final int _sourcePort;
     private final Storage.StoragePoolType _storagePoolType;
     private final StorageAdaptor _storageAdaptor;
     private final String _resourceGroup;
+    private final String localNodeName;
 
     public LinstorStoragePool(String uuid, String host, int port, String resourceGroup,
                               Storage.StoragePoolType storagePoolType, StorageAdaptor storageAdaptor) {
@@ -38,6 +45,7 @@ public class LinstorStoragePool implements KVMStoragePool {
         _storagePoolType = storagePoolType;
         _storageAdaptor = storageAdaptor;
         _resourceGroup = resourceGroup;
+        localNodeName = getHostname();
     }
 
     @Override
@@ -192,5 +200,16 @@ public class LinstorStoragePool implements KVMStoragePool {
 
     public String getResourceGroup() {
         return _resourceGroup;
+    }
+
+    static String getHostname() {
+        OutputInterpreter.AllLinesParser parser = new OutputInterpreter.AllLinesParser();
+        Script sc = new Script("hostname", Duration.millis(10000L), s_logger);
+        String res = sc.execute(parser);
+        if (res != null) {
+            throw new CloudRuntimeException(String.format("Unable to run 'hostname' command: %s", res));
+        }
+        String response = parser.getLines();
+        return response.trim();
     }
 }
