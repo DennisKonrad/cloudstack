@@ -59,6 +59,7 @@ import com.cloud.api.storage.LinstorRevertBackupSnapshotCommand;
 import com.cloud.configuration.Config;
 import com.cloud.host.Host;
 import com.cloud.host.dao.HostDao;
+import com.cloud.resource.ResourceState;
 import com.cloud.storage.DataStoreRole;
 import com.cloud.storage.ResizeVolumePayload;
 import com.cloud.storage.SnapshotVO;
@@ -213,6 +214,7 @@ public class LinstorPrimaryDataStoreDriverImpl implements PrimaryDataStoreDriver
                 }
                 throw new CloudRuntimeException("Linstor: Unable to delete resource definition: " + rscDefName);
             }
+            s_logger.info(String.format("Linstor: Deleted resource %s", rscDefName));
         } catch (ApiException apiEx)
         {
             s_logger.error("Linstor: ApiEx - " + apiEx.getMessage());
@@ -864,7 +866,7 @@ public class LinstorPrimaryDataStoreDriverImpl implements PrimaryDataStoreDriver
         Host host = null;
         for (String nodeName : linstorNodeNames) {
             host = _hostDao.findByName(nodeName);
-            if (host != null) {
+            if (host != null && host.getResourceState() == ResourceState.Enabled) {
                 s_logger.info(String.format("Linstor: Make resource %s available on node %s ...", rscName, nodeName));
                 ApiCallRcList answers = api.resourceMakeAvailableOnNode(rscName, nodeName, new ResourceMakeAvailable());
                 if (!answers.hasError()) {
@@ -891,21 +893,16 @@ public class LinstorPrimaryDataStoreDriverImpl implements PrimaryDataStoreDriver
     }
 
     private Optional<RemoteHostEndPoint> getDiskfullEP(DevelopersApi api, String rscName) throws ApiException {
-        com.linbit.linstor.api.model.StoragePool linSP =
-            LinstorUtil.getDiskfulStoragePool(api, rscName);
-        if (linSP != null)
-        {
-            Host host = _hostDao.findByName(linSP.getNodeName());
-            if (host == null)
-            {
-                s_logger.error("Linstor: Host '" + linSP.getNodeName() + "' not found.");
-                return Optional.empty();
-            }
-            else
-            {
-                return Optional.of(RemoteHostEndPoint.getHypervisorHostEndPoint(host));
+        List<com.linbit.linstor.api.model.StoragePool> linSPs = LinstorUtil.getDiskfulStoragePools(api, rscName);
+        if (linSPs != null) {
+            for (com.linbit.linstor.api.model.StoragePool sp : linSPs) {
+                Host host = _hostDao.findByName(sp.getNodeName());
+                if (host != null && host.getResourceState() == ResourceState.Enabled) {
+                    return Optional.of(RemoteHostEndPoint.getHypervisorHostEndPoint(host));
+                }
             }
         }
+        s_logger.error("Linstor: No diskfull host found.");
         return Optional.empty();
     }
 
@@ -957,9 +954,11 @@ public class LinstorPrimaryDataStoreDriverImpl implements PrimaryDataStoreDriver
             }
             else {
                 answer = new Answer(cmd, false, "Unable to get matching Linstor endpoint.");
+                deleteResourceDefinition(pool, rscName);
             }
         } catch (ApiException exc) {
             s_logger.error("copy template failed: ", exc);
+            deleteResourceDefinition(pool, rscName);
             throw new CloudRuntimeException(exc.getBestMessage());
         }
         return answer;
