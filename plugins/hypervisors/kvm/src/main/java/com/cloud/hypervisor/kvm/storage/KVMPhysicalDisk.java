@@ -22,6 +22,8 @@ public class KVMPhysicalDisk {
     private String path;
     private String name;
     private KVMStoragePool pool;
+    private String dispName;
+    private String vmName;
 
     public static String RBDStringBuilder(String monHost, int monPort, String authUserName, String authSecret, String image) {
         String rbdOpts;
@@ -58,7 +60,9 @@ public class KVMPhysicalDisk {
 
     @Override
     public String toString() {
-        return "KVMPhysicalDisk [path=" + path + ", name=" + name + ", pool=" + pool + ", format=" + format + ", size=" + size + ", virtualSize=" + virtualSize + "]";
+        return String.format("KVMPhysicalDisk %s",
+                ReflectionToStringBuilderUtils.reflectOnlySelectedFields(
+                        this, "path", "name", "pool", "format", "size", "virtualSize", "dispName", "vmName"));
     }
 
     public void setFormat(PhysicalDiskFormat format) {
@@ -101,4 +105,19 @@ public class KVMPhysicalDisk {
         this.path = path;
     }
 
+    public String getDispName() {
+        return dispName;
+    }
+
+    public void setDispName(String dispName) {
+        this.dispName = dispName;
+    }
+
+    public String getVmName() {
+        return vmName;
+    }
+
+    public void setVmName(String vmName) {
+        this.vmName = vmName;
+    }
 }
