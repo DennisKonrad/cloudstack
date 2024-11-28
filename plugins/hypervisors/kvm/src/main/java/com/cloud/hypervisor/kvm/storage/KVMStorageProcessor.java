@@ -1071,7 +1071,7 @@ public class KVMStorageProcessor implements StorageProcessor {
         }
     }
 
-    protected synchronized String attachOrDetachISO(final Connect conn, final String vmName, String isoPath, final boolean isAttach, Map<String, String> params) throws LibvirtException, URISyntaxException,
+    protected synchronized String attachOrDetachISO(final Connect conn, final String vmName, String isoPath, final boolean isAttach, Map<String, String> params, DataStoreTO store) throws LibvirtException, URISyntaxException,
     InternalErrorException {
         String isoXml = null;
         boolean isUefiEnabled = MapUtils.isNotEmpty(params) && params.containsKey("UEFI");
@@ -1079,16 +1079,23 @@ public class KVMStorageProcessor implements StorageProcessor {
             final int index = isoPath.lastIndexOf("/");
             final String path = isoPath.substring(0, index);
             final String name = isoPath.substring(index + 1);
-            final KVMStoragePool secondaryPool = storagePoolMgr.getStoragePoolByURI(path);
-            final KVMPhysicalDisk isoVol = secondaryPool.getPhysicalDisk(name);
+            KVMStoragePool storagePool;
+            if (store instanceof PrimaryDataStoreTO) {
+                PrimaryDataStoreTO primaryDataStoreTO = (PrimaryDataStoreTO)store;
+                storagePool = storagePoolMgr.getStoragePool(primaryDataStoreTO.getPoolType(), store.getUuid());
+            } else {
+                storagePool = storagePoolMgr.getStoragePoolByURI(path);
+            }
+            final KVMPhysicalDisk isoVol = storagePool.getPhysicalDisk(name);
+            final DiskDef.DiskType isoDiskType = LibvirtComputingResource.getDiskType(isoVol);
             isoPath = isoVol.getPath();
 
             final DiskDef iso = new DiskDef();
-            iso.defISODisk(isoPath, isUefiEnabled);
+            iso.defISODisk(isoPath, isUefiEnabled, isoDiskType);
             isoXml = iso.toString();
         } else {
             final DiskDef iso = new DiskDef();
-            iso.defISODisk(null, isUefiEnabled);
+            iso.defISODisk(null, isUefiEnabled, DiskDef.DiskType.FILE);
             isoXml = iso.toString();
         }
 
@@ -1114,7 +1121,7 @@ public class KVMStorageProcessor implements StorageProcessor {
         try {
             String dataStoreUrl = getDataStoreUrlFromStore(store);
             final Connect conn = LibvirtConnection.getConnectionByVmName(cmd.getVmName());
-            attachOrDetachISO(conn, cmd.getVmName(), dataStoreUrl + File.separator + isoTO.getPath(), true, cmd.getControllerInfo());
+            attachOrDetachISO(conn, cmd.getVmName(), dataStoreUrl + File.separator + isoTO.getPath(), true, cmd.getControllerInfo(), store);
         } catch (final LibvirtException e) {
             return new Answer(cmd, false, e.toString());
         } catch (final URISyntaxException e) {
@@ -1137,7 +1144,7 @@ public class KVMStorageProcessor implements StorageProcessor {
         try {
             String dataStoreUrl = getDataStoreUrlFromStore(store);
             final Connect conn = LibvirtConnection.getConnectionByVmName(cmd.getVmName());
-            attachOrDetachISO(conn, cmd.getVmName(), dataStoreUrl + File.separator + isoTO.getPath(), false, cmd.getParams());
+            attachOrDetachISO(conn, cmd.getVmName(), dataStoreUrl + File.separator + isoTO.getPath(), false, cmd.getParams(), store);
         } catch (final LibvirtException e) {
             return new Answer(cmd, false, e.toString());
         } catch (final URISyntaxException e) {
