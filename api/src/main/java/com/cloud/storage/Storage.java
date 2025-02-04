@@ -129,34 +129,51 @@ public class Storage {
         ISODISK /* Template corresponding to a iso (non root disk) present in an OVA */
     }
 
+    public enum EncryptionSupport {
+        /**
+         * Encryption not supported.
+         */
+        Unsupported,
+        /**
+         * Will use hypervisor encryption driver (qemu -> luks)
+         */
+        Hypervisor,
+        /**
+         * Storage pool handles encryption and just provides an encrypted volume
+         */
+        Storage
+    }
+
     public static enum StoragePoolType {
-        Filesystem(false, true), // local directory
-        NetworkFilesystem(true, true), // NFS
-        IscsiLUN(true, false), // shared LUN, with a clusterfs overlay
-        Iscsi(true, false), // for e.g., ZFS Comstar
-        ISO(false, false), // for iso image
-        LVM(false, false), // XenServer local LVM SR
-        CLVM(true, false),
-        RBD(true, true), // http://libvirt.org/storage.html#StorageBackendRBD
-        SharedMountPoint(true, false),
-        VMFS(true, true), // VMware VMFS storage
-        PreSetup(true, true), // for XenServer, Storage Pool is set up by customers.
-        EXT(false, true), // XenServer local EXT SR
-        OCFS2(true, false),
-        SMB(true, false),
-        Gluster(true, false),
-        PowerFlex(true, true), // Dell EMC PowerFlex/ScaleIO (formerly VxFlexOS)
-        ManagedNFS(true, false),
-        Linstor(true, true),
-        DatastoreCluster(true, true), // for VMware, to abstract pool of clusters
-        StorPool(true, true);
+        Filesystem(false, true, EncryptionSupport.Hypervisor), // local directory
+        NetworkFilesystem(true, true, EncryptionSupport.Hypervisor), // NFS
+        IscsiLUN(true, false, EncryptionSupport.Unsupported), // shared LUN, with a clusterfs overlay
+        Iscsi(true, false, EncryptionSupport.Unsupported), // for e.g., ZFS Comstar
+        ISO(false, false, EncryptionSupport.Unsupported), // for iso image
+        LVM(false, false, EncryptionSupport.Unsupported), // XenServer local LVM SR
+        CLVM(true, false, EncryptionSupport.Unsupported),
+        RBD(true, true, EncryptionSupport.Unsupported), // http://libvirt.org/storage.html#StorageBackendRBD
+        SharedMountPoint(true, false, EncryptionSupport.Hypervisor),
+        VMFS(true, true, EncryptionSupport.Unsupported), // VMware VMFS storage
+        PreSetup(true, true, EncryptionSupport.Unsupported), // for XenServer, Storage Pool is set up by customers.
+        EXT(false, true, EncryptionSupport.Unsupported), // XenServer local EXT SR
+        OCFS2(true, false, EncryptionSupport.Unsupported),
+        SMB(true, false, EncryptionSupport.Unsupported),
+        Gluster(true, false, EncryptionSupport.Unsupported),
+        PowerFlex(true, true, EncryptionSupport.Hypervisor), // Dell EMC PowerFlex/ScaleIO (formerly VxFlexOS)
+        ManagedNFS(true, false, EncryptionSupport.Unsupported),
+        Linstor(true, true, EncryptionSupport.Storage),
+        DatastoreCluster(true, true, EncryptionSupport.Unsupported), // for VMware, to abstract pool of clusters
+        StorPool(true, true, EncryptionSupport.Unsupported);
 
         private final boolean shared;
         private final boolean overprovisioning;
+        private final EncryptionSupport encryption;
 
-        StoragePoolType(boolean shared, boolean overprovisioning) {
+        StoragePoolType(boolean shared, boolean overprovisioning, EncryptionSupport encryption) {
             this.shared = shared;
             this.overprovisioning = overprovisioning;
+            this.encryption = encryption;
         }
 
         public boolean isShared() {
@@ -165,6 +182,14 @@ public class Storage {
 
         public boolean supportsOverProvisioning() {
             return overprovisioning;
+        }
+
+        public boolean supportsEncryption() {
+            return encryption == EncryptionSupport.Hypervisor || encryption == EncryptionSupport.Storage;
+        }
+
+        public EncryptionSupport encryptionSupportMode() {
+            return encryption;
         }
     }
 
