@@ -25,7 +25,7 @@ from marvin.cloudstackTestCase import cloudstackTestCase
 # Import Integration Libraries
 # base - contains all resources as entities and defines create, delete, list operations on them
 from marvin.lib.base import Account, DiskOffering, ServiceOffering, Snapshot, StoragePool, Template, User, \
-    VirtualMachine, Volume
+    VirtualMachine, VmSnapshot, Volume
 
 # common - commonly used methods for all tests are listed here
 from marvin.lib.common import get_domain, get_template, get_zone, list_clusters, list_hosts, list_virtual_machines, \
@@ -887,8 +887,94 @@ class TestLinstorVolumes(cloudstackTestCase):
             "Check volume was deleted"
         )
 
+    @attr(tags=['basic'], required_hardware=False)
+    def test_09_create_snapshot(self):
+        """Create snapshot of root disk"""
+        self.virtual_machine.stop(self.apiClient)
+
+        volume = list_volumes(
+            self.apiClient,
+            virtualmachineid = self.virtual_machine.id,
+            type = "ROOT",
+            listall = True,
+        )
+        snapshot = Snapshot.create(
+            self.apiClient,
+            volume_id = volume[0].id,
+            account=self.account.name,
+            domainid=self.domain.id,
+        )
+
+        self.assertIsNotNone(snapshot, "Could not create snapshot")
+
+        snapshot.delete(self.apiClient)
+
+    @attr(tags=['basic'], required_hardware=False)
+    def test_10_create_template_from_snapshot(self):
+        """
+        Create a template from a snapshot and start an instance from it
+        """
+        self.virtual_machine.stop(self.apiClient)
+
+        volume = list_volumes(
+            self.apiClient,
+            virtualmachineid = self.virtual_machine.id,
+            type = "ROOT",
+            listall = True,
+        )
+        snapshot = Snapshot.create(
+            self.apiClient,
+            volume_id=volume[0].id,
+            account=self.account.name,
+            domainid=self.domain.id,
+        )
+        self.cleanup.append(snapshot)
+
+        self.assertIsNotNone(snapshot, "Could not create snapshot")
+
+        services = {
+            "displaytext": "IntegrationTestTemplate",
+            "name": "int-test-template",
+            "ostypeid": self.template.ostypeid,
+            "ispublic": "true"
+        }
+
+        custom_template = Template.create_from_snapshot(
+            self.apiClient,
+            snapshot,
+            services,
+        )
+        self.cleanup.append(custom_template)
+
+        # create VM from custom template
+        test_virtual_machine = VirtualMachine.create(
+            self.apiClient,
+            self.testdata[TestData.virtualMachine2],
+            accountid=self.account.name,
+            zoneid=self.zone.id,
+            serviceofferingid=self.compute_offering.id,
+            templateid=custom_template.id,
+            domainid=self.domain.id,
+            startvm=False,
+            mode='basic',
+        )
+        self.cleanup.append(test_virtual_machine)
+
+        TestLinstorVolumes._start_vm(test_virtual_machine)
+
+        test_virtual_machine.stop(self.apiClient)
+
+        test_virtual_machine.delete(self.apiClient, True)
+        self.cleanup.remove(test_virtual_machine)
+
+        custom_template.delete(self.apiClient)
+        self.cleanup.remove(custom_template)
+        snapshot.delete(self.apiClient)
+        self.cleanup.remove(snapshot)
+
+
     @attr(tags=['advanced', 'migration'], required_hardware=False)
-    def test_09_migrate_volume_to_same_instance_pool(self):
+    def test_11_migrate_volume_to_same_instance_pool(self):
         """Migrate volume to the same instance pool"""
 
         if not self.testdata[TestData.migrationTests]:
@@ -1020,7 +1106,7 @@ class TestLinstorVolumes(cloudstackTestCase):
         test_virtual_machine.delete(self.apiClient, True)
 
     @attr(tags=['advanced', 'migration'], required_hardware=False)
-    def test_10_migrate_volume_to_distinct_instance_pool(self):
+    def test_12_migrate_volume_to_distinct_instance_pool(self):
         """Migrate volume to distinct instance pool"""
 
         if not self.testdata[TestData.migrationTests]:
@@ -1150,6 +1236,132 @@ class TestLinstorVolumes(cloudstackTestCase):
         #######################################
 
         test_virtual_machine.delete(self.apiClient, True)
+
+    @attr(tags=["basic"], required_hardware=False)
+    def test_13_create_vm_snapshots(self):
+        """Test to create VM snapshots
+        """
+        vm = TestLinstorVolumes._start_vm(self.virtual_machine)
+
+        try:
+            # Login to VM and write data to file system
+            self.debug("virt: {}".format(vm))
+            ssh_client = self.virtual_machine.get_ssh_client(vm.ipaddress, retries=5)
+            ssh_client.execute("echo 'hello world' > testfile")
+            ssh_client.execute("sync")
+        except Exception as exc:
+            self.fail("SSH failed for Virtual machine {}: {}".format(self.virtual_machine.ssh_ip, exc))
+
+        time.sleep(10)
+        memory_snapshot = False
+        vm_snapshot = VmSnapshot.create(
+            self.apiClient,
+            self.virtual_machine.id,
+            memory_snapshot,
+            "VMSnapshot1",
+            "test snapshot"
+        )
+        self.assertEqual(
+            vm_snapshot.state,
+            "Ready",
+            "Check the snapshot of vm is ready!"
+        )
+
+    @attr(tags=["basic"], required_hardware=False)
+    def test_14_revert_vm_snapshots(self):
+        """Test to revert VM snapshots
+        """
+
+        result = None
+        try:
+            ssh_client = self.virtual_machine.get_ssh_client(reconnect=True)
+            result = ssh_client.execute("rm -rf testfile")
+        except Exception as exc:
+            self.fail("SSH failed for Virtual machine %s: %s".format(self.virtual_machine.ipaddress, exc))
+
+        if result is not None and "No such file or directory" in str(result):
+            self.fail("testfile not deleted")
+
+        time.sleep(5)
+
+        list_snapshot_response = VmSnapshot.list(
+            self.apiClient,
+            virtualmachineid=self.virtual_machine.id,
+            listall=True)
+
+        self.assertEqual(
+            isinstance(list_snapshot_response, list),
+            True,
+            "Check list response returns a valid list"
+        )
+        self.assertNotEqual(
+            list_snapshot_response,
+            None,
+            "Check if snapshot exists in ListSnapshot"
+        )
+
+        self.assertEqual(
+            list_snapshot_response[0].state,
+            "Ready",
+            "Check the snapshot of vm is ready!"
+        )
+
+        self.virtual_machine.stop(self.apiClient, forced=True)
+
+        VmSnapshot.revertToSnapshot(
+            self.apiClient,
+            list_snapshot_response[0].id
+        )
+
+        TestLinstorVolumes._start_vm(self.virtual_machine)
+
+        try:
+            ssh_client = self.virtual_machine.get_ssh_client(reconnect=True)
+
+            result = ssh_client.execute("cat testfile")
+
+        except Exception as exc:
+            self.fail("SSH failed for Virtual machine {}: {}".format(self.virtual_machine.ipaddress, exc))
+
+        self.assertEqual(
+            "hello world",
+            result[0],
+            "Check the content is the same as originally written"
+        )
+
+    @attr(tags=["basic"], required_hardware=False)
+    def test_15_delete_vm_snapshots(self):
+        """Test to delete vm snapshots
+        """
+
+        list_snapshot_response = VmSnapshot.list(
+            self.apiClient,
+            virtualmachineid=self.virtual_machine.id,
+            listall=True)
+
+        self.assertEqual(
+            isinstance(list_snapshot_response, list),
+            True,
+            "Check list response returns a valid list"
+        )
+        self.assertNotEqual(
+            list_snapshot_response,
+            None,
+            "Check if snapshot exists in ListSnapshot"
+        )
+        VmSnapshot.deleteVMSnapshot(
+            self.apiClient,
+            list_snapshot_response[0].id)
+
+        time.sleep(5)
+
+        list_snapshot_response = VmSnapshot.list(
+            self.apiClient,
+            virtualmachineid=self.virtual_machine.id,
+            listall=False)
+        self.debug('list_snapshot_response -------------------- {}'.format(list_snapshot_response))
+
+        self.assertIsNone(list_snapshot_response, "snapshot is already deleted")
 
     def _create_vm_using_template_and_destroy_vm(self, template):
         vm_name = "VM-%d" % random.randint(0, 100)
