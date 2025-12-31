@@ -229,7 +229,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
             makeResourceAvailable(api, foundRscName, false);
 
             if (!resources.isEmpty() && !resources.get(0).getVolumes().isEmpty()) {
-                final String devPath = resources.get(0).getVolumes().get(0).getDevicePath();
+                final String devPath = LinstorUtil.getDevicePathFromResource(resources.get(0));
                 s_logger.info("Linstor: Created drbd device: " + devPath);
                 final KVMPhysicalDisk kvmDisk = new KVMPhysicalDisk(devPath, name, pool);
                 kvmDisk.setFormat(QemuImg.PhysicalDiskFormat.RAW);
@@ -453,8 +453,9 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
     private Optional<ResourceWithVolumes> getResourceByPathOrName(
             final List<ResourceWithVolumes> resources, String path) {
         return resources.stream()
-            .filter(rsc -> getLinstorRscName(path).equalsIgnoreCase(rsc.getName()) || rsc.getVolumes().stream()
-                .anyMatch(v -> path.equals(v.getDevicePath())))
+            .filter(rsc -> getLinstorRscName(path).equalsIgnoreCase(rsc.getName()) ||
+                    path.equals(LinstorUtil.formatDrbdByResDevicePath(rsc.getName())) ||
+                    rsc.getVolumes().stream().anyMatch(v -> path.equals(v.getDevicePath())))
             .findFirst();
     }
 
