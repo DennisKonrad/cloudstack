@@ -287,10 +287,7 @@ public class LinstorPrimaryDataStoreLifeCycleImpl implements PrimaryDataStoreLif
 
     @Override
     public boolean deleteDataStore(DataStore store) {
-        if (cleanupDatastore(store)) {
-            return dataStoreHelper.deletePrimaryDataStore(store);
-        }
-        return false;
+        return dataStoreHelper.deletePrimaryDataStore(store);
     }
 
     /* (non-Javadoc)

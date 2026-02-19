@@ -60,9 +60,7 @@ public class KVMPhysicalDisk {
 
     @Override
     public String toString() {
-        return String.format("KVMPhysicalDisk %s",
-                ReflectionToStringBuilderUtils.reflectOnlySelectedFields(
-                        this, "path", "name", "pool", "format", "size", "virtualSize", "dispName", "vmName"));
+        return "KVMPhysicalDisk [path=" + path + ", name=" + name + ", pool=" + pool + ", format=" + format + ", size=" + size + ", virtualSize=" + virtualSize + ", dispName=" + dispName + ", vmName=" + vmName + "]";
     }
 
     public void setFormat(PhysicalDiskFormat format) {

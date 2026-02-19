@@ -44,7 +44,6 @@ import com.linbit.linstor.api.model.ProviderKind;
 import com.linbit.linstor.api.model.Resource;
 import com.linbit.linstor.api.model.ResourceConnectionModify;
 import com.linbit.linstor.api.model.ResourceDefinition;
-import com.linbit.linstor.api.model.ResourceGroup;
 import com.linbit.linstor.api.model.ResourceDefinitionModify;
 import com.linbit.linstor.api.model.ResourceGroupSpawn;
 import com.linbit.linstor.api.model.ResourceMakeAvailable;
@@ -716,7 +715,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
 
         File finalSourceFile = new File(finalSourcePath);
         final KVMPhysicalDisk dstDisk = destPool.createPhysicalDisk(
-                name, QemuImg.PhysicalDiskFormat.RAW, Storage.ProvisioningType.THIN, finalSourceFile.length(), null);
+                name, QemuImg.PhysicalDiskFormat.RAW, Storage.ProvisioningType.THIN, finalSourceFile.length());
 
         final DevelopersApi api = getLinstorAPI(destPool);
         applyAuxProps(api, name, finalSourceFile.getName(), null);
