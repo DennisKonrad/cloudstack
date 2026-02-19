@@ -619,7 +619,6 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
         s_logger.debug(String.format("Linstor.copyPhysicalDisk: %s -> %s", disk.getPath(), name));
         final QemuImg.PhysicalDiskFormat sourceFormat = disk.getFormat();
         final String sourcePath = disk.getPath();
-        final QemuImg qemu = new QemuImg(timeout);
 
         final QemuImgFile srcFile = new QemuImgFile(sourcePath, sourceFormat);
 
@@ -634,7 +633,9 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
         destFile.setFormat(dstDisk.getFormat());
         destFile.setSize(disk.getVirtualSize());
 
+        boolean zeroedDevice = LinstorUtil.resourceSupportZeroBlocks(destPools, getLinstorRscName(name));
         try {
+            final QemuImg qemu = new QemuImg(timeout, zeroedDevice, true);
             qemu.convert(srcFile, destFile);
         } catch (QemuImgException | LibvirtException e) {
             s_logger.error(e);

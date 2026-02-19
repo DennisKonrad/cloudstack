@@ -60,7 +60,7 @@ public final class LinstorRevertBackupSnapshotCommandWrapper
             blkDiscardScript.add(dstPath);
             blkDiscardScript.execute();
         }
-        final QemuImg qemu = new QemuImg(waitMilliSeconds);
+        final QemuImg qemu = new QemuImg(waitMilliSeconds, zeroedDevice, true);
         final QemuImgFile dstFile = new QemuImgFile(dstPath, QemuImg.PhysicalDiskFormat.RAW);
         qemu.convert(srcQemuFile, dstFile);
     }

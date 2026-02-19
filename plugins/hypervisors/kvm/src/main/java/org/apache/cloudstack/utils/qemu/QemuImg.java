@@ -38,11 +38,14 @@ public class QemuImg {
     public final static String FILE_FORMAT = "file_format";
     public final static String IMAGE = "image";
     public final static String VIRTUAL_SIZE = "virtual_size";
+    public static final String TARGET_ZERO_FLAG = "--target-is-zero";
 
     /* The qemu-img binary. We expect this to be in $PATH */
     public String _qemuImgPath = "qemu-img";
     private String cloudQemuImgPath = "cloud-qemu-img";
     private int timeout;
+    private boolean skipZero = false;
+    private boolean noCache = false;
 
     private String getQemuImgPathScript = String.format("which %s >& /dev/null; " +
                     "if [ $? -gt 0 ]; then echo \"%s\"; else echo \"%s\"; fi",
@@ -95,6 +98,38 @@ public class QemuImg {
 
     public QemuImg(final int timeout) {
         this.timeout = timeout;
+    }
+
+    /**
+     * Create a QemuImg object that supports skipping target zeroes.
+     * We detect this support via qemu-img help since support can
+     * be backported rather than found in a specific version.
+     *
+     * @param timeout script timeout, default 0
+     * @param skipZeroIfSupported Don't write zeroes to target device during convert, if supported by qemu-img
+     * @param noCache Ensure we flush writes to target disk (useful for block device targets)
+     */
+    public QemuImg(final int timeout, final boolean skipZeroIfSupported, final boolean noCache) {
+        if (skipZeroIfSupported) {
+            final Script s = new Script(_qemuImgPath, timeout);
+            s.add("--help");
+
+            final OutputInterpreter.AllLinesParser parser = new OutputInterpreter.AllLinesParser();
+            final String result = s.execute(parser);
+
+            // Older Qemu returns output in result due to --help reporting error status
+            if (result != null) {
+                if (result.contains(TARGET_ZERO_FLAG)) {
+                    this.skipZero = true;
+                }
+            } else {
+                if (parser.getLines().contains(TARGET_ZERO_FLAG)) {
+                    this.skipZero = true;
+                }
+            }
+        }
+        this.timeout = timeout;
+        this.noCache = noCache;
     }
 
     public void setTimeout(final int timeout) {
@@ -254,6 +289,16 @@ public class QemuImg {
         }
 
         script.add("convert");
+
+        if (skipZero) {
+            script.add("-n");
+            script.add(TARGET_ZERO_FLAG);
+            script.add("-W");
+            // with target-is-zero we skip zeros in 1M chunks for compatibility
+            script.add("-S");
+            script.add("1M");
+        }
+
         Long version  = LibvirtConnection.getConnection().getVersion();
         if (version >= 2010000) {
             script.add("-U");
@@ -280,6 +325,11 @@ public class QemuImg {
         }
 
         addSnapshotToConvertCommand(srcFile.getFormat().toString(), snapshotName, forceSourceFormat, script, version);
+
+        if (noCache) {
+            script.add("-t");
+            script.add("none");
+        }
 
         script.add(srcFile.getFileName());
         script.add(destFile.getFileName());
