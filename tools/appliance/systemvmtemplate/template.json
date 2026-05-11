@@ -28,7 +28,7 @@
       "headless": true,
       "http_directory": "http",
       "iso_checksum": "sha512:2810f894afab9ac2631ddd097599761c1481b85e629d6a3197fe1488713af048d37241eb85def681ba86e62b406dd9b891ee1ae7915416335b6bb000d57c1e53",
-      "iso_url": "https://cdimage.debian.org/debian-cd/11.3.0/amd64/iso-cd/debian-11.3.0-amd64-netinst.iso",
+      "iso_url": "https://get.debian.org/images/archive/11.3.0/amd64/iso-cd/debian-11.3.0-amd64-netinst.iso",
       "net_device": "virtio-net",
       "output_directory": "../dist",
       "qemuargs": [

@@ -68,7 +68,7 @@ function zero_disk() {
 }
 
 function finalize() {
-  configure_misc
+####################################  configure_misc
   configure_rundisk_size
   configure_sudoers
   cleanup_final

@@ -49,7 +49,7 @@ function apt_upgrade() {
   # Setup sudo
   echo 'cloud ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cloud
 
-  add_backports
+  #add_backports
 
   rm -fv /root/*.iso
   apt-get -q -y update
