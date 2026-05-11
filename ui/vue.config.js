@@ -171,4 +171,8 @@ const vueConfig = {
 
 vueConfig.configureWebpack.plugins.push(createThemeColorReplacerPlugin())
 
+module.exports = {
+	parallel: false
+}
+
 module.exports = vueConfig
